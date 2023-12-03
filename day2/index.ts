@@ -10,18 +10,37 @@ const buckets = {
 };
 
 const validIDs: number[] = [];
+const powers: number[] = [];
 data.forEach((line) => {
   const [, id, ...rest] = line.split(/Game |;|: /);
+  let valid = true;
+  const minBuckets = {
+    red: 0,
+    green: 0,
+    blue: 0,
+  };
 
-  const valid = rest.every((item) => {
-    return [...item.matchAll(/(\d+) (red|blue|green)/g)].every(
+  // game
+  rest.forEach((item) => {
+    [...item.matchAll(/(\d+) (red|blue|green)/g)].forEach(
       ([, count, color]) => {
         const c = +count;
-        return c <= buckets[color as keyof typeof buckets];
+        if (c > buckets[color as keyof typeof buckets]) {
+          valid = false;
+        }
+
+        if (c > minBuckets[color as keyof typeof minBuckets]) {
+          minBuckets[color as keyof typeof minBuckets] = c;
+        }
       }
     );
   });
+
   if (valid) validIDs.push(+id);
+  powers.push(minBuckets.red * minBuckets.green * minBuckets.blue);
 });
-const res = validIDs.reduce((a, b) => a + b, 0);
-console.log(res);
+const p1 = validIDs.reduce((a, b) => a + b, 0);
+console.log(p1);
+
+const p2 = powers.reduce((a, b) => a + b, 0);
+console.log(p2);
