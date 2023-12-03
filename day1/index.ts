@@ -3,8 +3,7 @@ import { readInput } from "../helpers";
 const dir = import.meta.dir;
 const data = readInput(dir);
 
-const group = `one|two|three|four|five|six|seven|eight|nine|zero|\\d`;
-const regex = new RegExp(`(${group})(?:.*(${group}))?`);
+const getRegExp = (group: string) => new RegExp(`(${group})(?:.*(${group}))?`);
 
 const numberMap = {
   one: "1",
@@ -19,15 +18,22 @@ const numberMap = {
   zero: "0",
 };
 
-const res = data
-  .map((line) => {
-    let [_, a, b] = line.match(regex) ?? [];
-    if (!b) b = a;
+const fn = (reg: RegExp) =>
+  data
+    .map((line) => {
+      let [_, a, b] = line.match(reg) ?? [];
+      if (!b) b = a;
 
-    if (a in numberMap) a = numberMap[a as keyof typeof numberMap];
-    if (b in numberMap) b = numberMap[b as keyof typeof numberMap];
+      if (a in numberMap) a = numberMap[a as keyof typeof numberMap];
+      if (b in numberMap) b = numberMap[b as keyof typeof numberMap];
 
-    return Number(a + b);
-  })
-  .reduce((a, b) => a + b, 0);
-console.log(res);
+      return Number(a + b);
+    })
+    .reduce((a, b) => a + b, 0);
+
+const p1 = fn(getRegExp("\\d"));
+console.log(p1);
+
+const full = `one|two|three|four|five|six|seven|eight|nine|zero|\\d`;
+const p2 = fn(getRegExp(full));
+console.log(p2);
