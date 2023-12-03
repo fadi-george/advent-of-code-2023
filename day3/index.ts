@@ -3,7 +3,9 @@ import { readInput } from "../helpers";
 const dir = import.meta.dir;
 const lines = readInput(dir);
 const visitedIndices = new Set<number>();
+
 const partNums: number[] = [];
+const gearRatios: number[] = [];
 
 lines.forEach((line, row) => {
   const symbols = [...line.matchAll(/[^\d|\.]/g)];
@@ -23,6 +25,8 @@ lines.forEach((line, row) => {
       [row + 1, col + 1], // bottom right
     ];
 
+    let partCount = 0;
+    let gearRatio = 1;
     neighbors.forEach(([r, c]) => {
       const neighbor = lines[r][c];
 
@@ -31,6 +35,7 @@ lines.forEach((line, row) => {
       if (!/\d/.test(neighbor)) return;
 
       let numStr = neighbor;
+      partCount++;
       visitedIndices.add(r * line.length + c);
 
       // reading leftwards
@@ -56,9 +61,15 @@ lines.forEach((line, row) => {
       }
 
       partNums.push(+numStr);
+      gearRatio *= +numStr;
     });
+
+    if (partCount === 2) gearRatios.push(gearRatio);
   });
 });
 
-const res = partNums.reduce((a, b) => a + b, 0);
-console.log(res);
+const p1 = partNums.reduce((a, b) => a + b, 0);
+console.log(p1);
+
+const p2 = gearRatios.reduce((a, b) => a + b, 0);
+console.log(p2);
