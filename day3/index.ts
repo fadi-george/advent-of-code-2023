@@ -68,8 +68,8 @@ lines.forEach((line, row) => {
   });
 });
 
-const p1 = partNums.reduce((a, b) => a + b, 0);
+const p1 = partNums.sum();
 console.log(p1);
 
-const p2 = gearRatios.reduce((a, b) => a + b, 0);
+const p2 = gearRatios.sum();
 console.log(p2);

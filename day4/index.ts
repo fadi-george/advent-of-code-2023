@@ -1,4 +1,4 @@
-import { readInput, sum } from "../helpers";
+import { readInput } from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir);
@@ -34,5 +34,5 @@ lines.forEach((line) => {
 });
 console.log(p1);
 
-p2 = sum(Object.values(cardCounts));
+p2 = Object.values(cardCounts).sum();
 console.log(p2);

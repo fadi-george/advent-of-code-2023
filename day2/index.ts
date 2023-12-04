@@ -39,8 +39,8 @@ data.forEach((line) => {
   if (valid) validIDs.push(+id);
   powers.push(minBuckets.red * minBuckets.green * minBuckets.blue);
 });
-const p1 = validIDs.reduce((a, b) => a + b, 0);
+const p1 = validIDs.sum();
 console.log(p1);
 
-const p2 = powers.reduce((a, b) => a + b, 0);
+const p2 = powers.sum();
 console.log(p2);

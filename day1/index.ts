@@ -29,7 +29,7 @@ const fn = (reg: RegExp) =>
 
       return Number(a + b);
     })
-    .reduce((a, b) => a + b, 0);
+    .sum();
 
 const p1 = fn(getRegExp("\\d"));
 console.log(p1);
