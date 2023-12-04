@@ -8,5 +8,6 @@ export const readInput = (dir: string, regex = "\n") => {
       "utf8"
     )
     .split(regex);
-  return [];
 };
+
+export const sum = (arr: number[]) => arr.reduce((a, b) => a + b, 0);
