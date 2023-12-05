@@ -12,14 +12,15 @@ type RuleType =
   | "light-to-temperature"
   | "temperature-to-humidity"
   | "humidity-to-location";
-const seedsMap: Record<RuleType, Record<number, number>> = {
-  "seed-to-soil": {},
-  "soil-to-fertilizer": {},
-  "fertilizer-to-water": {},
-  "water-to-light": {},
-  "light-to-temperature": {},
-  "temperature-to-humidity": {},
-  "humidity-to-location": {},
+
+const seedsMap: Record<RuleType, { src: number[]; diff: number }[]> = {
+  "seed-to-soil": [],
+  "soil-to-fertilizer": [],
+  "fertilizer-to-water": [],
+  "water-to-light": [],
+  "light-to-temperature": [],
+  "temperature-to-humidity": [],
+  "humidity-to-location": [],
 };
 
 // get mappings
@@ -31,13 +32,12 @@ lines.forEach((section, i) => {
     const ruleType = section.match(/(.*)\ /)?.[1] as RuleType;
     const rules = section.match(/(\d+) (\d+) (\d+)/g);
     if (rules && ruleType) {
-      seedsMap[ruleType] = seedsMap[ruleType] || {};
-
       rules.forEach((rule) => {
         const [dStart, sStart, r] = rule.split(" ").map(Number);
-        for (let i = 0; i < r; i++) {
-          seedsMap[ruleType][sStart + i] = dStart + i;
-        }
+        seedsMap[ruleType].push({
+          src: [sStart, sStart + r],
+          diff: dStart - sStart,
+        });
       });
     }
   }
@@ -54,7 +54,18 @@ let resArr: number[] = seeds;
   "temperature-to-humidity",
   "humidity-to-location",
 ].forEach((ruleType) => {
-  resArr = resArr.map((seed) => seedsMap[ruleType as RuleType][seed] || seed);
+  resArr = resArr.map((seed) => {
+    const match = seedsMap[ruleType as RuleType].find((s) => {
+      const [start, end] = s.src;
+      return seed >= start && seed <= end;
+    });
+
+    if (match) {
+      return seed + match.diff;
+    } else {
+      return seed;
+    }
+  });
 });
 const p1 = Math.min(...resArr);
 console.log(p1);
