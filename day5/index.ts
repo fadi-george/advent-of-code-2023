@@ -99,24 +99,32 @@ const getSeedLocations = (startArr: number[]) => {
 const p1 = Math.min(...getSeedLocations(seeds));
 console.log(p1);
 
-p2seeds.sort((a, b) => a[1] - a[0] - (b[1] - b[0]));
-// const visited = new Set<number>();
-const p2Res = p2seeds.map((s) => {
-  const seedsArr = [];
-  for (let i = s[0]; i <= s[1]; i++) {
-    // if (visited.has(i)) console.log("no way");
-    // visited.add(i);
-    seedsArr.push(i);
-  }
+let found = false;
+const newOrder = order.toReversed();
+let p2 = 0;
+while (!found) {
+  let seed = p2;
 
-  const temp = getSeedLocations(seedsArr);
-  let min = Infinity;
-  for (let i = 0; i < temp.length; i++) {
-    if (temp[i] < min) {
-      min = temp[i];
+  newOrder.forEach((ruleType) => {
+    const foundSeed = seedsMap[ruleType as RuleType].find((s) => {
+      const [start, end] = s.src.map((v) => v + s.diff);
+      return seed >= start && seed <= end;
+    });
+
+    if (foundSeed) {
+      seed = seed - foundSeed.diff;
     }
+  });
+
+  p2seeds.forEach(([start, end]) => {
+    if (seed >= start && seed <= end) {
+      found = true;
+    }
+  });
+
+  if (found) {
+    break;
   }
-  return min;
-});
-const p2 = Math.min(...p2Res);
+  p2++;
+}
 console.log(p2);
