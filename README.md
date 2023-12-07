@@ -1,4 +1,4 @@
-# 🎄 Advent of Code 2023 (Typescript)
+# 🎄 Advent of Code 2023 (Typescript & Bun)
 
 Run w/ `bun js`.
 
