@@ -3,6 +3,22 @@ import { readInput } from "../helpers";
 const dir = import.meta.dir;
 const lines = readInput(dir, "\n");
 
+type Game = {
+  bid: number;
+  cards: string;
+  type: CardType;
+};
+
+enum CardType {
+  High = 0,
+  OnePair = 1,
+  TwoPair = 2,
+  ThreeOfAKind = 3,
+  FullHouse = 3.5,
+  FourOfAKind = 4,
+  FiveOfAKind = 5,
+}
+
 let CardVal = {
   "2": 0,
   "3": 1,
@@ -18,19 +34,56 @@ let CardVal = {
   K: 11,
   A: 12,
 };
+type CardKey = keyof typeof CardVal;
 
-enum CardType {
-  High = 0,
-  OnePair = 1,
-  TwoPair = 2,
-  ThreeOfAKind = 3,
-  FullHouse = 3.5,
-  FourOfAKind = 4,
-  FiveOfAKind = 5,
-}
+const getCardType = (cardCounts: Record<string, number>) => {
+  const len = Object.keys(cardCounts).length;
+  const counts = new Set(Object.values(cardCounts));
 
-let games: { bid: number; cards: string; type: CardType }[] = [];
-lines.forEach((line) => {
+  switch (len) {
+    case 4:
+      if (counts.has(2)) return CardType.OnePair;
+    case 3:
+      if (counts.has(2)) return CardType.TwoPair;
+      if (counts.has(3)) return CardType.ThreeOfAKind;
+    case 2:
+      if (counts.has(3)) return CardType.FullHouse;
+      if (counts.has(4)) return CardType.FourOfAKind;
+    case 1:
+      return CardType.FiveOfAKind;
+    default:
+      return CardType.High;
+  }
+};
+
+const getWinnings = (games: Game[]) => {
+  const winnings = games.reduce((acc, game, i) => {
+    return acc + (i + 1) * game.bid;
+  }, 0);
+  return winnings;
+};
+
+const sortGames = (games: Game[], cardVals: Record<string, number>) => {
+  return games.sort((a, b) => {
+    const aType = a.type;
+    const bType = b.type;
+
+    if (aType === bType) {
+      const aCards = a.cards.split("");
+      const bCards = b.cards.split("");
+      for (let i = 0; i < aCards.length; i++) {
+        const diff =
+          cardVals[aCards[i] as CardKey] - cardVals[bCards[i] as CardKey];
+        if (diff !== 0) {
+          return diff;
+        }
+      }
+    }
+    return aType - bType;
+  });
+};
+
+const parseLines = (line: string) => {
   const [cards, bid] = line.split(" ");
   const cardCounts = cards
     .split("")
@@ -39,55 +92,22 @@ lines.forEach((line) => {
       return acc;
     }, {});
 
-  const len = Object.keys(cardCounts).length;
-  const counts = Object.values(cardCounts);
+  return [cards, bid, cardCounts] as const;
+};
 
-  let type = CardType.High;
-  if (len === 4 && counts.includes(2)) {
-    type = CardType.OnePair;
-  } else if (len === 3 && counts.includes(2)) {
-    type = CardType.TwoPair;
-  } else if (len === 3 && counts.includes(3)) {
-    type = CardType.ThreeOfAKind;
-  } else if (len === 2 && counts.includes(3)) {
-    type = CardType.FullHouse;
-  } else if (len === 2 && counts.includes(4)) {
-    type = CardType.FourOfAKind;
-  } else if (len === 1) {
-    type = CardType.FiveOfAKind;
-  }
+// part 1
+let games: Game[] = [];
+lines.forEach((line) => {
+  const [cards, bid, cardCounts] = parseLines(line);
 
   games.push({
     cards: cards,
     bid: +bid,
-    type,
+    type: getCardType(cardCounts),
   });
 });
 
-games.sort((a, b) => {
-  const aType = a.type;
-  const bType = b.type;
-
-  if (aType === bType) {
-    const aCards = a.cards.split("");
-    const bCards = b.cards.split("");
-
-    for (let i = 0; i < aCards.length; i++) {
-      const diff =
-        CardVal[aCards[i] as keyof typeof CardVal] -
-        CardVal[bCards[i] as keyof typeof CardVal];
-
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-  }
-  return aType - bType;
-});
-
-const p1 = games.reduce((acc, game, i) => {
-  return acc + (i + 1) * game.bid;
-}, 0);
+const p1 = getWinnings(sortGames(games, CardVal));
 console.log(p1);
 
 // part 2
@@ -108,13 +128,7 @@ CardVal = {
 };
 games = [];
 lines.forEach((line) => {
-  const [cards, bid] = line.split(" ");
-  const cardCounts = cards
-    .split("")
-    .reduce<Record<string, number>>((acc, card) => {
-      acc[card] = acc[card] ? acc[card] + 1 : 1;
-      return acc;
-    }, {});
+  const [cards, bid, cardCounts] = parseLines(line);
 
   if ("J" in cardCounts) {
     const reserve = cardCounts["J"];
@@ -123,12 +137,11 @@ lines.forEach((line) => {
       .filter(([, count]) => count > 0)
       .sort((a, b) => {
         const diff = b[1] - a[1];
-        if (diff === 0) {
-          return (
-            CardVal[b[0] as keyof typeof CardVal] -
-            CardVal[a[0] as keyof typeof CardVal]
-          );
-        }
+
+        // prefer higher value card when counts are equal
+        if (diff === 0)
+          return CardVal[b[0] as CardKey] - CardVal[a[0] as CardKey];
+
         return diff;
       });
 
@@ -140,52 +153,12 @@ lines.forEach((line) => {
     }
   }
 
-  const len = Object.keys(cardCounts).length;
-  const counts = Object.values(cardCounts);
-
-  let type = CardType.High;
-  if (len === 4 && counts.includes(2)) {
-    type = CardType.OnePair;
-  } else if (len === 3 && counts.includes(2)) {
-    type = CardType.TwoPair;
-  } else if (len === 3 && counts.includes(3)) {
-    type = CardType.ThreeOfAKind;
-  } else if (len === 2 && counts.includes(3)) {
-    type = CardType.FullHouse;
-  } else if (len === 2 && counts.includes(4)) {
-    type = CardType.FourOfAKind;
-  } else if (len === 1) {
-    type = CardType.FiveOfAKind;
-  }
-
   games.push({
     cards: cards,
     bid: +bid,
-    type,
+    type: getCardType(cardCounts),
   });
 });
 
-games.sort((a, b) => {
-  const aType = a.type;
-  const bType = b.type;
-
-  if (aType === bType) {
-    const aCards = a.cards.split("");
-    const bCards = b.cards.split("");
-    for (let i = 0; i < aCards.length; i++) {
-      const diff =
-        CardVal[aCards[i] as keyof typeof CardVal] -
-        CardVal[bCards[i] as keyof typeof CardVal];
-      if (diff !== 0) {
-        return diff;
-      }
-    }
-  }
-  return aType - bType;
-});
-
-// 253986478 wrong
-const p2 = games.reduce((acc, game, i) => {
-  return acc + (i + 1) * game.bid;
-}, 0);
+const p2 = getWinnings(sortGames(games, CardVal));
 console.log(p2);
