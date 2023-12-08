@@ -4,7 +4,6 @@ const dir = import.meta.dir;
 const lines = readInput(dir, "\n\n");
 
 const maps: Record<string, [string, string]> = {};
-
 const dirs = lines[0] as unknown as ("R" | "L")[];
 
 // part 1
@@ -13,49 +12,32 @@ lines[1].split("\n").forEach((line) => {
   maps[p] = [l, r];
 });
 
-let curr = "AAA";
-let dirI = 0;
-let currDir: "L" | "R" = dirs[0];
-let steps = 0;
+const countSteps = (start: string, cond: (curr: string) => boolean) => {
+  let curr = start;
+  let dirI = 0;
+  let currDir: "L" | "R" = dirs[0];
+  let steps = 0;
 
-if (curr in maps) {
-  while (curr !== "ZZZ") {
-    steps++;
+  if (curr in maps) {
+    while (cond(curr)) {
+      steps++;
 
-    const [l, r] = maps[curr];
-    curr = currDir === "L" ? l : r;
+      const [l, r] = maps[curr];
+      curr = currDir === "L" ? l : r;
 
-    dirI++;
-    currDir = dirs[dirI];
-    if (!currDir) {
-      currDir = dirs[0];
-      dirI = 0;
-    }
-  }
-  console.log(steps);
-}
-
-// part 2
-let currNodes = Object.keys(maps).filter((m) => m[2] === "A");
-const minSteps = currNodes.map((node, i) => {
-  curr = node;
-  steps = 0;
-  currDir = dirs[0];
-  dirI = 0;
-
-  while (curr[2] !== "Z") {
-    steps++;
-
-    const [l, r] = maps[curr];
-    curr = currDir === "L" ? l : r;
-
-    dirI++;
-    currDir = dirs[dirI];
-    if (!currDir) {
-      currDir = dirs[0];
-      dirI = 0;
+      currDir = dirs[++dirI] ?? dirs[(dirI = 0)]; // get next direction otherwise reset to first direction
     }
   }
 
   return steps;
-});
+};
+console.log(
+  "Part 1: ",
+  countSteps("AAA", (n) => n !== "ZZZ")
+);
+
+// part 2
+const minsSteps = Object.keys(maps) // get nodes that start with A
+  .filter((m) => m[2] === "A")
+  .map((m) => countSteps(m, (n) => n[2] !== "Z")); // stop at nodes that end with Z
+console.log("Part 2: ", minsSteps.reduce(lcm));
