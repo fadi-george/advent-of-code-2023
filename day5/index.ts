@@ -128,12 +128,11 @@ while (!found) {
 }
 console.log(p2);
 
-for (let i = 0; i < 99; i++) {
-  console.log(i, getSeedLocations([i]));
-}
-
 // // p2 - ordered approach
 // // add missing intervals e.g. add [0 - 49] which maps to [0 - 49]
+// for (let i = 0; i < 99; i++) {
+//   console.log(i, getSeedLocations([i]));
+// }
 // order.forEach((ruleType) => {
 //   const map = seedsMap[ruleType as RuleType];
 //   let start = min;
