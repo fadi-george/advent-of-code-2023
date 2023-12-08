@@ -1,4 +1,4 @@
-import { readInput } from "../helpers";
+import { lcm, readInput } from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir, "\n\n");
@@ -18,18 +18,44 @@ let dirI = 0;
 let currDir: "L" | "R" = dirs[0];
 let steps = 0;
 
-while (curr !== "ZZZ") {
-  steps++;
+if (curr in maps) {
+  while (curr !== "ZZZ") {
+    steps++;
 
-  const [l, r] = maps[curr];
-  curr = currDir === "L" ? l : r;
+    const [l, r] = maps[curr];
+    curr = currDir === "L" ? l : r;
 
-  dirI++;
-  currDir = dirs[dirI];
-  if (!currDir) {
-    currDir = dirs[0];
-    dirI = 0;
+    dirI++;
+    currDir = dirs[dirI];
+    if (!currDir) {
+      currDir = dirs[0];
+      dirI = 0;
+    }
   }
+  console.log(steps);
 }
 
-console.log(steps);
+// part 2
+let currNodes = Object.keys(maps).filter((m) => m[2] === "A");
+const minSteps = currNodes.map((node, i) => {
+  curr = node;
+  steps = 0;
+  currDir = dirs[0];
+  dirI = 0;
+
+  while (curr[2] !== "Z") {
+    steps++;
+
+    const [l, r] = maps[curr];
+    curr = currDir === "L" ? l : r;
+
+    dirI++;
+    currDir = dirs[dirI];
+    if (!currDir) {
+      currDir = dirs[0];
+      dirI = 0;
+    }
+  }
+
+  return steps;
+});
