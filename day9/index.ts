@@ -19,8 +19,21 @@ const nextNums = lines.map((line) => {
     triArr.push(nextArr);
     i++;
   }
-
-  // console.log(triArr);
-  return triArr.reduce((acc, arr) => acc + arr[arr.length - 1], 0);
+  return triArr;
 });
-console.log("Part 1: ", nextNums.sum());
+const p1 = nextNums.reduce(
+  (acc, arrs) => acc + arrs.reduce((acc, arr) => acc + arr[arr.length - 1], 0),
+  0
+);
+console.log("Part 1: ", p1);
+
+// part 2
+const p2 = nextNums.reduce((acc, arrs) => {
+  let prev = 0;
+  for (let i = arrs.length - 2; i >= 0; i--) {
+    prev = arrs[i][0] - prev;
+  }
+
+  return acc + prev;
+}, 0);
+console.log("Part 2: ", p2);
