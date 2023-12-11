@@ -43,32 +43,33 @@ for (let i = 0; i < tmp.length - 1; i++) {
   }
 }
 
-// adjust indices
-const offsets = Object.keys(inds).reduce<Record<string, [number, number]>>(
-  (acc, g) => {
-    acc[g] = [0, 0];
-    return acc;
-  },
-  {}
-);
-
-const gKeys = Object.keys(inds);
-const getDistances = (offset = 0) => {
+// find pairs of distances
+const getDistances = (scale = 1) => {
   const newInds = structuredClone(inds);
 
+  // adjust indices
+  const offsets = Object.keys(newInds).reduce<Record<string, [number, number]>>(
+    (acc, g) => {
+      acc[g] = [0, 0];
+      return acc;
+    },
+    {}
+  );
+
+  const gKeys = Object.keys(newInds);
   emptyCols.forEach((col) => {
     gKeys.forEach((g) => {
-      const [r, c] = inds[g];
+      const [r, c] = newInds[g];
       if (c > col) {
-        offsets[g][1] += offset - 1; // expand right
+        offsets[g][1] += scale - 1; // expand right
       }
     });
   });
   emptyRows.forEach((row) => {
     gKeys.forEach((g) => {
-      const [r, c] = inds[g];
+      const [r, c] = newInds[g];
       if (r > row) {
-        offsets[g][0] += offset - 1; // expand down
+        offsets[g][0] += scale - 1; // expand down
       }
     });
   });
@@ -79,7 +80,6 @@ const getDistances = (offset = 0) => {
     newInds[g] = [r + offsets[g][0], c + offsets[g][1]];
   });
 
-  // find pairs of distances
   const distances: number[] = [];
   const pairSet = new Set<string>();
   Object.keys(newInds).forEach((g) => {
@@ -96,7 +96,11 @@ const getDistances = (offset = 0) => {
       }
     });
   });
+
   return distances;
 };
+
 console.log("Part 1: ", getDistances(2).sum());
+
+// 15208074 wrong
 console.log("Part 2: ", getDistances(1000000).sum());
