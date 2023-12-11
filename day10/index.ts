@@ -249,5 +249,5 @@ console.log("Part 1: ", dist / 2);
 
 // part 2
 // 25, 27, 50, 51 wrong
-console.log(printGrid(grid));
+// console.log(printGrid(grid));
 console.log("Part 2: ", enclosed.size);
