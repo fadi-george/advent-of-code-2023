@@ -17,7 +17,7 @@ lines.map((line, rI) => {
   ]);
 });
 
-const getPermutations = (_str: string, _groups: number[], _len: number) => {
+const getPermutations = (s: string, g: number[], l: number) => {
   const visited: { [key: string]: string } = {};
   const perms: string[] = [];
 
@@ -35,23 +35,27 @@ const getPermutations = (_str: string, _groups: number[], _len: number) => {
     ];
 
     while (queues.length > 0) {
-      const { str, groups, len } = queues.shift()!;
+      const { str, groups, len } = queues.pop()!;
 
-      const key = `${str}-${groups.join(",")}-${len}`;
-      if (visited[key]) visited[key] = str;
+      const key = `${str}`;
+      if (visited[key]) {
+        continue;
+      }
 
       const minLen = groups.reduce((acc, n) => acc + n + 1, 0) - 1;
-      if (minLen + str.length > len) continue;
+      if (minLen + str.length > len) {
+        visited[key] = str;
+        continue;
+      }
       if (groups.length === 0) {
+        visited[key] = str;
         if (str.length === len) {
           perms.push(str);
-          visited[key] = str;
           continue;
         }
         if (str.length < len) {
           const v = `${str}${".".repeat(len - str.length)}`;
           perms.push(v);
-          visited[key] = v;
           continue;
         }
       }
@@ -59,17 +63,20 @@ const getPermutations = (_str: string, _groups: number[], _len: number) => {
       const group = groups[0];
       const endCh = groups.length > 1 ? "." : "";
       queues.push({
-        str: `${str}${"#".repeat(group)}${endCh}`,
-        groups: groups.slice(1),
-        len,
-      });
-      queues.push({
         str: `${str}.`,
         groups,
         len,
       });
+      queues.push({
+        str: `${str}${"#".repeat(group)}${endCh}`,
+        groups: groups.slice(1),
+        len,
+      });
     }
   };
+
+  permute(s, g, l);
+
   return perms;
 };
 const matchPatterns = (pattern: string, options: string[]) => {
