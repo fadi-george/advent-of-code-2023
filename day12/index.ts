@@ -17,66 +17,61 @@ lines.map((line, rI) => {
   ]);
 });
 
-const getPermutations = (s: string, g: number[], l: number) => {
-  const visited: { [key: string]: string } = {};
+const getPermutations = (s: string, g: number[], pattern: string) => {
+  const cache: { [key: string]: string[] } = {};
   const perms: string[] = [];
+  const len = pattern.length;
+  // console.log(s, g, len);
 
-  const permute = (_str: string, _groups: number[], _len: number) => {
-    const queues: {
-      str: string;
-      groups: number[];
-      len: number;
-    }[] = [
-      {
-        str: _str,
-        groups: _groups,
-        len: _len,
-      },
-    ];
+  const permute = (str: string, gI: number) => {
+    const key = `${str.length}-${gI}`;
+    // console.log("key", {
+    //   key,
+    //   str,
+    //   gI,
+    // });
+    cache[key] ??= [] as string[];
 
-    while (queues.length > 0) {
-      const { str, groups, len } = queues.pop()!;
-
-      const key = `${str}`;
-      if (visited[key]) {
-        continue;
-      }
-
-      const minLen = groups.reduce((acc, n) => acc + n + 1, 0) - 1;
-      if (minLen + str.length > len) {
-        visited[key] = str;
-        continue;
-      }
-      if (groups.length === 0) {
-        visited[key] = str;
-        if (str.length === len) {
-          perms.push(str);
-          continue;
-        }
-        if (str.length < len) {
-          const v = `${str}${".".repeat(len - str.length)}`;
-          perms.push(v);
-          continue;
-        }
-      }
-
-      const group = groups[0];
-      const endCh = groups.length > 1 ? "." : "";
-      queues.push({
-        str: `${str}.`,
-        groups,
-        len,
-      });
-      queues.push({
-        str: `${str}${"#".repeat(group)}${endCh}`,
-        groups: groups.slice(1),
-        len,
-      });
+    if (cache[key].length > 0) {
+      console.log("cache hit", cache[key]);
+      return cache[key];
     }
+
+    const groups = g.slice(gI);
+    const minLen = groups.reduce((acc, n) => acc + n + 1, 0) - 1;
+    if (minLen + str.length > len) {
+      cache[key].push([]);
+      return [];
+    }
+    if (groups.length === 0) {
+      if (str.length === len) {
+        console.log("match");
+        cache[key].push(str);
+        perms.push(str);
+        return [str];
+      }
+      if (str.length < len) {
+        const v = `${str}${".".repeat(len - str.length)}`;
+        cache[key].push(v);
+        return [v];
+      }
+    }
+
+    const group = g[gI];
+    const endCh = groups.length > 1 ? "." : "";
+
+    // console.log({
+    //   str,
+    //   gI,
+    //   group,
+    //   a: `${str}.`,
+    //   b: `${str}${"#".repeat(group)}${endCh}`,
+    // });
+    permute(`${str}.`, gI);
+    permute(`${str}${"#".repeat(group)}${endCh}`, gI + 1);
   };
 
-  permute(s, g, l);
-
+  permute(s, 0);
   return perms;
 };
 const matchPatterns = (pattern: string, options: string[]) => {
@@ -94,8 +89,9 @@ const matchPatterns = (pattern: string, options: string[]) => {
 };
 
 const countMatches = (patterns: (readonly [string, number[]])[]) => {
-  const p = patterns.map(([pattern, groups]) => {
-    const arrs = getPermutations("", groups, pattern.length);
+  const p = patterns.slice(1, 2).map(([pattern, groups]) => {
+    const arrs = getPermutations("", groups, pattern);
+    console.log(arrs, pattern);
     const matches = matchPatterns(pattern, arrs);
     return matches;
   });
@@ -103,4 +99,4 @@ const countMatches = (patterns: (readonly [string, number[]])[]) => {
 };
 
 console.log(countMatches(p1Patterns));
-console.log(countMatches(p2Patterns));
+// console.log(countMatches(p2Patterns));
