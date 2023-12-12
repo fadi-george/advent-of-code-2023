@@ -22,15 +22,15 @@ lines.forEach((line, rI) => {
 });
 
 // helpers
-const getDirs = (r: number, c: number) => {
+const getDirs = (arr: string[][], r: number, c: number) => {
   let dirs: number[][] = [];
-  switch (grid[r][c]) {
+  switch (arr[r][c]) {
     case "S":
       dirs = [];
-      let up = grid[r - 1]?.[c];
-      let down = grid[r + 1]?.[c];
-      let left = grid[r]?.[c - 1];
-      let right = grid[r]?.[c + 1];
+      let up = arr[r - 1]?.[c];
+      let down = arr[r + 1]?.[c];
+      let left = arr[r]?.[c - 1];
+      let right = arr[r]?.[c + 1];
 
       if (up === "|" || up === "7" || up === "F") dirs.push([r - 1, c]);
       if (down === "|" || down === "L" || down === "J") dirs.push([r + 1, c]);
@@ -85,7 +85,7 @@ const checkCorner = (v: string) => {
 };
 
 const startPos = getIndex(sR, sC);
-const paths = getDirs(sR, sC);
+const paths = getDirs(grid, sR, sC);
 const endPos = getIndex(paths[1][0], paths[1][1]);
 
 if (paths.length !== 2) throw new Error("Invalid start");
@@ -96,13 +96,108 @@ const p = {
   visited: new Set<number>([startPos, getIndex(paths[0][0], paths[0][1])]),
 };
 
+const cornerSet = new Set(["F", "7", "L", "J"]);
+
+const isCorner = (s: string): s is Corner => cornerSet.has(s);
+
+let dist: number = 0;
+while (1) {
+  if (getIndex(p.r, p.c) === endPos) {
+    dist = p.dist; // dist should be the same for both
+    break;
+  }
+  const dirs = getDirs(grid, p.r, p.c);
+
+  dirs.forEach((d, i) => {
+    const v = grid[d[0]]?.[d[1]];
+    const pos = getIndex(d[0], d[1]);
+
+    if (v && v !== "." && !p.visited.has(pos)) {
+      p.visited.add(pos);
+      p.r = d[0];
+      p.c = d[1];
+      p.dist++;
+    }
+  });
+}
+console.log("Part 1: ", dist / 2);
+
+// part 2
+const enclosed = new Set<number>();
+
+const scaleP = (v: number) => 3 * v + 1;
+
+const newGrid: string[][] = new Array(grid.length * 3)
+  .fill(null)
+  .map(() => new Array(grid[0].length * 3).fill(null));
+
+// scale up original grid by 3
+for (let i = 0; i < grid.length; i++) {
+  for (let j = 0; j < grid[0].length; j++) {
+    let ch = "";
+    switch (grid[i][j]) {
+      case ".":
+        ch = "....I....";
+        break;
+
+      case "-":
+        ch = "...---...";
+        break;
+
+      case "|":
+        ch = ".|..|..|.";
+        break;
+
+      case "7":
+        ch = "...-7..|.";
+        break;
+
+      case "L":
+        ch = ".|..L-...";
+        break;
+
+      case "J":
+        ch = ".|.-J....";
+        break;
+
+      case "F":
+        ch = "....F-.|.";
+        break;
+
+      case "S":
+        let top = grid[i - 1]?.[j];
+        let bottom = grid[i + 1]?.[j];
+        let left = grid[i]?.[j - 1];
+        let right = grid[i]?.[j + 1];
+        let t = ".";
+        let b = ".";
+        let l = ".";
+        let r = ".";
+
+        if (top === "|" || top === "7" || top === "F") t = "|";
+        if (bottom === "|" || bottom === "L" || bottom === "J") b = "|";
+        if (left === "-" || left === "F" || left === "L") l = "-";
+        if (right === "-" || right === "J" || right === "7") r = "-";
+
+        ch = `.${t}.${l}S${r}.${b}.`;
+        break;
+    }
+
+    for (let k = 0; k < ch.length; k++) {
+      newGrid[i * 3 + Math.floor(k / 3)][j * 3 + (k % 3)] = ch[k];
+    }
+  }
+}
+
 // determine what type of corner starting point is
-let lastCorner = grid[sR][sC] as "F" | "7" | "L" | "J";
-if (grid[sR][sC] === "S") {
-  let up = grid[sR - 1]?.[sC];
-  let down = grid[sR + 1]?.[sC];
-  let left = grid[sR]?.[sC - 1];
-  let right = grid[sR]?.[sC + 1];
+const sR2 = scaleP(sR);
+const sC2 = scaleP(sC);
+let lastCorner = newGrid[sR2][sC2] as "F" | "7" | "L" | "J";
+if (newGrid[sR2][sC2] === "S") {
+  let up = newGrid[sR2 - 1]?.[sC2];
+  let down = newGrid[sR2 + 1]?.[sC2];
+  let left = newGrid[sR2]?.[sC2 - 1];
+  let right = newGrid[sR2]?.[sC2 + 1];
 
   if (
     (right === "-" || right === "J" || right === "7") &&
@@ -127,34 +222,16 @@ if (grid[sR][sC] === "S") {
   }
 }
 
-const enclosed = new Set<number>();
-const cornerSet = new Set(["F", "7", "L", "J"]);
-
-const isCorner = (s: string): s is Corner => cornerSet.has(s);
-
-// we start at 1 step
-checkCorner(grid[p.r][p.c]);
-let offset = [0, 0];
-switch (lastCorner) {
-  case "F":
-    offset = p.c === sC ? [0, 1] : [1, 0];
-    break;
-  case "7":
-    offset = p.c === sC ? [0, -1] : [1, 0];
-    break;
-  case "L":
-    offset = p.c === sC ? [0, 1] : [-1, 0];
-    break;
-  case "J":
-    offset = p.c === sC ? [0, -1] : [-1, 0];
-    break;
-}
-
+// track enclosed area
+let cornerCount = 1;
 const checkArea = (r: number, c: number) => {
-  const v = grid[r][c];
+  const v = newGrid[r]?.[c];
+
+  if (v === "I") {
+    enclosed.add(getIndex2(r, c));
+  }
   if (v === ".") {
-    grid[r][c] = "X";
-    enclosed.add(getIndex(r, c));
+    newGrid[r][c] = "/";
     checkArea(r + 1, c);
     checkArea(r - 1, c);
     checkArea(r, c + 1);
@@ -162,48 +239,40 @@ const checkArea = (r: number, c: number) => {
   }
 };
 
-const countArea = (r: number, c: number) => {
-  const v = grid[r][c];
-
-  // check edges
-  switch (v) {
-    case "F":
-      if (offset[0] < 0 || offset[1] < 0) {
-        checkArea(r - 1, c); // check up
-        checkArea(r, c - 1); // check left
-      }
-      break;
-    case "L":
-      if (offset[0] > 0 || offset[1] < 0) {
-        checkArea(r + 1, c); // check down
-        checkArea(r, c - 1); // check left
-      }
-      break;
-    case "J":
-      if (offset[0] > 0 || offset[1] > 0) {
-        checkArea(r + 1, c); // check down
-        checkArea(r, c + 1); // check right
-      }
-      break;
-    case "7":
-      if (offset[0] < 0 || offset[1] > 0) {
-        checkArea(r - 1, c); // check up
-        checkArea(r, c + 1); // check right
-      }
-      break;
-  }
+const getIndex2 = (r: number, c: number) => 3 * r * grid[0].length + c;
+const paths2 = getDirs(newGrid, sR2, sC2);
+const endPos2 = getIndex2(paths2[1][0], paths2[1][1]);
+const p2 = {
+  r: paths2[0][0],
+  c: paths2[0][1],
+  dist: 2,
+  visited: new Set<number>([
+    getIndex2(sR2, sC2),
+    getIndex2(paths2[0][0], paths2[0][1]),
+  ]),
 };
 
-countArea(p.r, p.c);
-
-let dist: number = 0;
-while (1) {
-  if (getIndex(p.r, p.c) === endPos) {
-    dist = p.dist; // dist should be the same for both
+let offset = [0, 0];
+switch (lastCorner) {
+  case "F":
+    offset = p2.c === sC2 ? [0, 1] : [1, 0];
     break;
-  }
+  case "7":
+    offset = p2.c === sC2 ? [0, -1] : [1, 0];
+    break;
+  case "L":
+    offset = p2.c === sC2 ? [0, 1] : [-1, 0];
+    break;
+  case "J":
+    offset = p2.c === sC2 ? [0, -1] : [-1, 0];
+    break;
+}
 
-  const cv = grid[p.r][p.c];
+console.log(printGrid(newGrid));
+while (1) {
+  if (getIndex2(p2.r, p2.c) === endPos2) break;
+
+  const cv = newGrid[p2.r][p2.c];
   if (isCorner(cv)) {
     switch (cv) {
       case "F":
@@ -219,35 +288,32 @@ while (1) {
         offset = [-offset[1], -offset[0]];
         break;
     }
+
+    if (cornerCount === 1) {
+    }
+    cornerCount++;
   }
 
-  const dirs = getDirs(p.r, p.c);
+  const dirs = getDirs(newGrid, p2.r, p2.c);
 
   dirs.forEach((d, i) => {
-    const v = grid[d[0]]?.[d[1]];
-    const pos = getIndex(d[0], d[1]);
+    const v = newGrid[d[0]]?.[d[1]];
+    const pos = getIndex2(d[0], d[1]);
 
-    if (v && v !== "." && !p.visited.has(pos)) {
-      p.visited.add(pos);
-      p.r = d[0];
-      p.c = d[1];
-      p.dist++;
-
-      checkCorner(v);
+    if (v && v !== "." && !p2.visited.has(pos)) {
+      p2.visited.add(pos);
+      p2.r = d[0];
+      p2.c = d[1];
+      p2.dist += 1;
 
       if (v === "|" || v === "-") {
-        let cr = p.r + offset[0];
-        let cc = p.c + offset[1];
-        checkArea(cr, cc);
+        let cr = p2.r + offset[0];
+        let cc = p2.c + offset[1];
       }
-
-      countArea(p.r, p.c);
     }
   });
 }
-console.log("Part 1: ", dist / 2);
 
-// part 2
 // 25, 27, 50, 51 wrong
-// console.log(printGrid(grid));
+console.log(printGrid(newGrid));
 console.log("Part 2: ", enclosed.size);
