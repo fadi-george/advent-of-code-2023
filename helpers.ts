@@ -11,7 +11,7 @@ Array.prototype.product = function () {
 export const readInput = (dir: string, regex = "\n") => {
   return fs
     .readFileSync(
-      path.join(dir, `${import.meta.env.input || "sample4"}.txt`),
+      path.join(dir, `${import.meta.env.input || "sample"}.txt`),
       "utf8"
     )
     .split(regex);
@@ -85,3 +85,29 @@ export const floodFill = <T>(
 
 export const printSetInds = <T>(grid: Matrix<T>, set: Set<number>) =>
   [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length]);
+
+export const arraysEqual = (a: any[], b: any[]) => {
+  if (a === b) return true;
+  if (a == null || b == null) return false;
+  if (a.length != b.length) return false;
+  for (var i = 0; i < a.length; ++i) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+};
+
+export const transposeGrid = <T>(grid: T[][]): T[][] => {
+  const rows = grid.length;
+  const columns = grid[0].length;
+
+  // Create a new grid with swapped rows and columns
+  const transposedGrid: T[][] = [];
+  for (let i = 0; i < columns; i++) {
+    transposedGrid[i] = [];
+    for (let j = 0; j < rows; j++) {
+      transposedGrid[i][j] = grid[j][i];
+    }
+  }
+
+  return transposedGrid;
+};
