@@ -37,6 +37,7 @@ export const printGrid = (grid: any[][]) => {
   grid.forEach((row) => {
     console.log(row.join(""));
   });
+  console.log("\n");
 };
 
 type Matrix<T> = T[][];
