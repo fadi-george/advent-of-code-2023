@@ -112,3 +112,22 @@ export const transposeGrid = <T>(grid: T[][]): T[][] => {
 
   return transposedGrid;
 };
+
+export const reverseTransposeGrid = <T>(grid: T[][]): T[][] => {
+  const rows = grid.length;
+  const columns = grid[0].length;
+
+  // Create a new grid with swapped rows and columns
+  const transposedGrid: T[][] = [];
+  for (let i = 0; i < columns; i++) {
+    transposedGrid[i] = [];
+    for (let j = 0; j < rows; j++) {
+      transposedGrid[i][j] = grid[j][i];
+    }
+  }
+
+  // Reverse both rows and columns
+  const reversedGrid: T[][] = transposedGrid.map((row) => row.reverse());
+
+  return reversedGrid;
+};
