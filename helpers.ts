@@ -11,7 +11,7 @@ Array.prototype.product = function () {
 export const readInput = (dir: string, regex = "\n") => {
   return fs
     .readFileSync(
-      path.join(dir, `${import.meta.env.input || "sample"}.txt`),
+      path.join(dir, `${import.meta.env.input || "sample5"}.txt`),
       "utf8"
     )
     .split(regex);
@@ -113,21 +113,21 @@ export const transposeGrid = <T>(grid: T[][]): T[][] => {
   return transposedGrid;
 };
 
-export const reverseTransposeGrid = <T>(grid: T[][]): T[][] => {
-  const rows = grid.length;
-  const columns = grid[0].length;
+export const rotateLeft = <T>(grid: T[][]): T[][] =>
+  new Array(grid[0].length)
+    .fill([])
+    .map((_, i) => grid.map((row) => row[grid[0].length - 1 - i]));
 
-  // Create a new grid with swapped rows and columns
-  const transposedGrid: T[][] = [];
-  for (let i = 0; i < columns; i++) {
-    transposedGrid[i] = [];
-    for (let j = 0; j < rows; j++) {
-      transposedGrid[i][j] = grid[j][i];
-    }
-  }
+export const rotateRight = <T>(g: T[][]) =>
+  g[0].map((_, i) => g.map((r) => r[i]).reverse());
 
-  // Reverse both rows and columns
-  const reversedGrid: T[][] = transposedGrid.map((row) => row.reverse());
-
-  return reversedGrid;
-};
+export const getSurrounding = <T>(r: number, c: number) => [
+  [r - 1, c - 1], // top left
+  [r - 1, c], // top
+  [r - 1, c + 1], // top right
+  [r, c - 1], // left
+  [r, c + 1], // right
+  [r + 1, c - 1], // bottom left
+  [r + 1, c], // bottom
+  [r + 1, c + 1], // bottom right
+];

@@ -1,4 +1,4 @@
-import { floodFill, printGrid, readInput } from "../helpers";
+import { floodFill, getSurrounding, printGrid, readInput } from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir);
@@ -22,6 +22,11 @@ lines.forEach((line, rI) => {
 });
 
 // helpers
+const borderSet1 = new Set<number>();
+const borderSet2 = new Set<number>();
+const debugArr1: [number, number][] = [];
+const debugArr2: [number, number][] = [];
+
 const getDirs = (arr: string[][], r: number, c: number) => {
   let dirs: number[][] = [];
   switch (arr[r][c]) {
@@ -90,10 +95,10 @@ const p = {
   dist: 2,
   visited: new Set<number>([startPos, getIndex(paths[0][0], paths[0][1])]),
 };
-
-const cornerSet = new Set(["F", "7", "L", "J"]);
-
-const isCorner = (s: string): s is Corner => cornerSet.has(s);
+borderSet1.add(getIndex(sR, sC));
+debugArr1.push([sR, sC]);
+borderSet1.add(getIndex(paths[0][0], paths[0][1]));
+debugArr1.push([paths[0][0], paths[0][1]]);
 
 let dist: number = 0;
 while (1) {
@@ -112,6 +117,8 @@ while (1) {
       p.r = d[0];
       p.c = d[1];
       p.dist++;
+      borderSet1.add(pos);
+      debugArr1.push([d[0], d[1]]);
     }
   });
 }
@@ -121,6 +128,7 @@ console.log("Part 1: ", dist / 2);
 const enclosed = new Set<number>();
 
 const scaleP = (v: number) => 3 * v + 1;
+const getIndex2 = (r: number, c: number) => 3 * r * grid[0].length + c;
 
 const newGrid: string[][] = new Array(grid.length * 3)
   .fill(null)
@@ -180,6 +188,13 @@ for (let i = 0; i < grid.length; i++) {
 
     for (let k = 0; k < ch.length; k++) {
       newGrid[i * 3 + Math.floor(k / 3)][j * 3 + (k % 3)] = ch[k];
+
+      if (borderSet1.has(getIndex(i, j))) {
+        if (ch[k] !== "." && ch[k] !== "I") {
+          borderSet2.add(getIndex2(i * 3 + Math.floor(k / 3), j * 3 + (k % 3)));
+          debugArr2.push([i * 3 + Math.floor(k / 3), j * 3 + (k % 3)]);
+        }
+      }
     }
   }
 }
@@ -188,45 +203,54 @@ for (let i = 0; i < grid.length; i++) {
 const fillCh = "/";
 const sR2 = scaleP(sR);
 const sC2 = scaleP(sC);
-const getIndex2 = (r: number, c: number) => 3 * r * grid[0].length + c;
 
 const checkArea = (r: number, c: number) => {
   const v = newGrid[r]?.[c];
+  const p = getIndex2(r, c);
 
-  if (v === "I") {
-    enclosed.add(getIndex2(r, c));
-  }
-  if (v === ".") {
-    newGrid[r][c] = fillCh;
-    checkArea(r + 1, c);
-    checkArea(r - 1, c);
-    checkArea(r, c + 1);
-    checkArea(r, c - 1);
+  if (v !== fillCh) {
+    if (v === "I") {
+      enclosed.add(p);
+    } else if (!borderSet2.has(p)) {
+      if (v !== ".") {
+        // transform to I
+        const rOffset = r % 3;
+        const cOffset = c % 3;
+        const center = [r + 1 - rOffset, c + 1 - cOffset];
+        newGrid[center[0]][center[1]] = "I";
+        enclosed.add(getIndex2(center[0], center[1]));
+
+        const s = getSurrounding(center[0], center[1]);
+        s.forEach((s) => {
+          if (!borderSet2.has(getIndex2(s[0], s[1]))) {
+            newGrid[s[0]][s[1]] = fillCh;
+          }
+        });
+      } else {
+        newGrid[r][c] = fillCh;
+      }
+      checkArea(r + 1, c);
+      checkArea(r - 1, c);
+      checkArea(r, c + 1);
+      checkArea(r, c - 1);
+    }
   }
 };
 
+printGrid(newGrid);
+
 // disregard outside area
-printGrid(grid);
-printGrid(newGrid);
 floodFill(newGrid, 0, 0, [".", "I"], fillCh);
-printGrid(newGrid);
 
 // check starting area
-const surrounding = [
-  [sR2 - 1, sC2 - 1], // top left
-  [sR2 - 1, sC2], // top
-  [sR2 - 1, sC2 + 1], // top right
-  [sR2, sC2 - 1], // left
-  [sR2, sC2 + 1], // right
-  [sR2 + 1, sC2 - 1], // bottom left
-  [sR2 + 1, sC2], // bottom
-  [sR2 + 1, sC2 + 1], // bottom right
-];
-console.log(surrounding);
-surrounding.forEach((s) => {
-  checkArea(s[0], s[1]);
+getSurrounding(sR2, sC2).forEach((s) => {
+  if (newGrid[s[0]]?.[s[1]] !== fillCh) {
+    checkArea(s[0], s[1]);
+    return;
+  }
 });
+
 printGrid(newGrid);
 
-// 25, 27, 50, 51 wrong
+// 25, 27, 50, 51 wrong, 382
 console.log("Part 2: ", enclosed.size);
