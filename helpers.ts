@@ -84,10 +84,11 @@ export const floodFill = <T>(
   return matrix;
 };
 
-export const printSetInds = <T>(grid: Matrix<T>, set: Set<number>) =>
-  console.log(
-    [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length])
-  );
+export const indexToPos = <T>(grid: Matrix<T>, r: number, c: number) =>
+  r * grid[0].length + c;
+
+export const posToIndices = <T>(grid: Matrix<T>, set: Set<number>) =>
+  [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length]);
 
 export const arraysEqual = (a: any[], b: any[]) => {
   if (a === b) return true;
@@ -133,3 +134,22 @@ export const getSurrounding = <T>(r: number, c: number) => [
   [r + 1, c], // bottom
   [r + 1, c + 1], // bottom right
 ];
+
+export const addBorderToGrid = <T>(grid: T[][], borderValue: T): T[][] => {
+  const rows = grid.length;
+  const columns = grid[0].length;
+
+  // Create a new grid with an added border
+  const borderedGrid: T[][] = new Array(rows + 2)
+    .fill([])
+    .map(() => new Array(columns + 2).fill(borderValue));
+
+  // Copy the original grid to the center of the new grid
+  for (let i = 0; i < rows; i++) {
+    for (let j = 0; j < columns; j++) {
+      borderedGrid[i + 1][j + 1] = grid[i][j];
+    }
+  }
+
+  return borderedGrid;
+};
