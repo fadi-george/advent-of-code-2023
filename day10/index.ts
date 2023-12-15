@@ -1,9 +1,13 @@
-import { floodFill, getSurrounding, printGrid, readInput } from "../helpers";
+import {
+  floodFill,
+  getSurrounding,
+  printGrid,
+  printSetInds,
+  readInput,
+} from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir);
-
-type Corner = "F" | "7" | "L" | "J";
 
 // part 1
 let sR = 0;
@@ -22,10 +26,7 @@ lines.forEach((line, rI) => {
 });
 
 // helpers
-const borderSet1 = new Set<number>();
-const borderSet2 = new Set<number>();
-const debugArr1: [number, number][] = [];
-const debugArr2: [number, number][] = [];
+const borderSet = new Set<number>();
 
 const getDirs = (arr: string[][], r: number, c: number) => {
   let dirs: number[][] = [];
@@ -95,10 +96,8 @@ const p = {
   dist: 2,
   visited: new Set<number>([startPos, getIndex(paths[0][0], paths[0][1])]),
 };
-borderSet1.add(getIndex(sR, sC));
-debugArr1.push([sR, sC]);
-borderSet1.add(getIndex(paths[0][0], paths[0][1]));
-debugArr1.push([paths[0][0], paths[0][1]]);
+borderSet.add(getIndex(sR, sC));
+borderSet.add(getIndex(paths[0][0], paths[0][1]));
 
 let dist: number = 0;
 while (1) {
@@ -117,118 +116,28 @@ while (1) {
       p.r = d[0];
       p.c = d[1];
       p.dist++;
-      borderSet1.add(pos);
-      debugArr1.push([d[0], d[1]]);
+      borderSet.add(pos);
     }
   });
 }
 console.log("Part 1: ", dist / 2);
 
 // part 2
+const fillCh = "/";
 const enclosed = new Set<number>();
 
-const scaleP = (v: number) => 3 * v + 1;
-const getIndex2 = (r: number, c: number) => 3 * r * grid[0].length + c;
-
-const newGrid: string[][] = new Array(grid.length * 3)
-  .fill(null)
-  .map(() => new Array(grid[0].length * 3).fill(null));
-
-// scale up original grid by 3
-for (let i = 0; i < grid.length; i++) {
-  for (let j = 0; j < grid[0].length; j++) {
-    let ch = "";
-    switch (grid[i][j]) {
-      case ".":
-        ch = "....I....";
-        break;
-
-      case "-":
-        ch = "...---...";
-        break;
-
-      case "|":
-        ch = ".|..|..|.";
-        break;
-
-      case "7":
-        ch = "...-7..|.";
-        break;
-
-      case "L":
-        ch = ".|..L-...";
-        break;
-
-      case "J":
-        ch = ".|.-J....";
-        break;
-
-      case "F":
-        ch = "....F-.|.";
-        break;
-
-      case "S":
-        let top = grid[i - 1]?.[j];
-        let bottom = grid[i + 1]?.[j];
-        let left = grid[i]?.[j - 1];
-        let right = grid[i]?.[j + 1];
-        let t = ".";
-        let b = ".";
-        let l = ".";
-        let r = ".";
-
-        if (top === "|" || top === "7" || top === "F") t = "|";
-        if (bottom === "|" || bottom === "L" || bottom === "J") b = "|";
-        if (left === "-" || left === "F" || left === "L") l = "-";
-        if (right === "-" || right === "J" || right === "7") r = "-";
-
-        ch = `.${t}.${l}S${r}.${b}.`;
-        break;
-    }
-
-    for (let k = 0; k < ch.length; k++) {
-      newGrid[i * 3 + Math.floor(k / 3)][j * 3 + (k % 3)] = ch[k];
-
-      if (borderSet1.has(getIndex(i, j))) {
-        if (ch[k] !== "." && ch[k] !== "I") {
-          borderSet2.add(getIndex2(i * 3 + Math.floor(k / 3), j * 3 + (k % 3)));
-          debugArr2.push([i * 3 + Math.floor(k / 3), j * 3 + (k % 3)]);
-        }
-      }
-    }
-  }
-}
-
-// determine what type of corner starting point is
-const fillCh = "/";
-const sR2 = scaleP(sR);
-const sC2 = scaleP(sC);
-
 const checkArea = (r: number, c: number) => {
-  const v = newGrid[r]?.[c];
-  const p = getIndex2(r, c);
+  const v = grid[r]?.[c];
+  const p = getIndex(r, c);
+  console.log("Checking", r, c, v);
 
-  if (v !== fillCh) {
+  if (v && v !== fillCh) {
     if (v === "I") {
       enclosed.add(p);
-    } else if (!borderSet2.has(p)) {
-      if (v !== ".") {
-        // transform to I
-        const rOffset = r % 3;
-        const cOffset = c % 3;
-        const center = [r + 1 - rOffset, c + 1 - cOffset];
-        newGrid[center[0]][center[1]] = "I";
-        enclosed.add(getIndex2(center[0], center[1]));
+    } else if (!borderSet.has(p)) {
+      enclosed.add(p);
+      grid[r][c] = "I";
 
-        const s = getSurrounding(center[0], center[1]);
-        s.forEach((s) => {
-          if (!borderSet2.has(getIndex2(s[0], s[1]))) {
-            newGrid[s[0]][s[1]] = fillCh;
-          }
-        });
-      } else {
-        newGrid[r][c] = fillCh;
-      }
       checkArea(r + 1, c);
       checkArea(r - 1, c);
       checkArea(r, c + 1);
@@ -237,20 +146,21 @@ const checkArea = (r: number, c: number) => {
   }
 };
 
-printGrid(newGrid);
+printSetInds(grid, borderSet);
+printGrid(grid);
 
 // disregard outside area
-floodFill(newGrid, 0, 0, [".", "I"], fillCh);
+floodFill(grid, 0, 0, [".", "I"], fillCh);
 
 // check starting area
-getSurrounding(sR2, sC2).forEach((s) => {
-  if (newGrid[s[0]]?.[s[1]] !== fillCh) {
+getSurrounding(sR, sC).forEach((s) => {
+  if (grid[s[0]]?.[s[1]] !== fillCh) {
     checkArea(s[0], s[1]);
     return;
   }
 });
 
-printGrid(newGrid);
+printGrid(grid);
 
 // 25, 27, 50, 51 wrong, 382
 console.log("Part 2: ", enclosed.size);

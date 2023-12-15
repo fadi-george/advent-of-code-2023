@@ -85,7 +85,9 @@ export const floodFill = <T>(
 };
 
 export const printSetInds = <T>(grid: Matrix<T>, set: Set<number>) =>
-  [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length]);
+  console.log(
+    [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length])
+  );
 
 export const arraysEqual = (a: any[], b: any[]) => {
   if (a === b) return true;
