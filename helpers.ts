@@ -87,8 +87,8 @@ export const floodFill = <T>(
 export const indexToPos = <T>(grid: Matrix<T>, r: number, c: number) =>
   r * grid[0].length + c;
 
-export const posToIndices = <T>(grid: Matrix<T>, set: Set<number>) =>
-  [...set].map((v) => [Math.floor(v / grid[0].length), v % grid[0].length]);
+export const posToIndices = <T>(grid: Matrix<T>, set: Set<number> | string[]) =>
+  [...set].map((v) => [Math.floor(+v / grid[0].length), +v % grid[0].length]);
 
 export const arraysEqual = (a: any[], b: any[]) => {
   if (a === b) return true;
