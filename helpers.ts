@@ -33,9 +33,9 @@ export const lcm = (a: number, b: number) => {
   return (a * b) / gcd(a, b);
 };
 
-export const printGrid = (grid: any[][]) => {
+export const printGrid = (grid: any[][], joinCh = "") => {
   grid.forEach((row) => {
-    console.log(row.join(""));
+    console.log(row.join(joinCh));
   });
   console.log("\n");
 };
