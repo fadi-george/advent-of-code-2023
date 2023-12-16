@@ -1,12 +1,10 @@
-import { indexToPos, posToIndices, printGrid, readInput } from "../helpers";
+import { indexToPos, readInput } from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir, "\n");
 
 const grid: string[][] = [];
-lines.forEach((line) => {
-  grid.push(line.split(""));
-});
+lines.forEach((line) => grid.push(line.split("")));
 
 const width = grid[0].length;
 const height = grid.length;
@@ -23,18 +21,14 @@ type QueueItem = {
   dir: Dir;
 };
 
+// part 1
 const getEnergized = (q: QueueItem[], debug = false) => {
-  let energizedSet = new Set<number>();
   let visited = new Set<string>();
+  let energizedSet = new Set<number>();
 
   while (q.length > 0) {
     let { r, c, dir } = q.shift()!;
-
     const v = grid[r]?.[c];
-
-    // if (debug) {
-    //   console.log(r, c, v, dir);
-    // }
 
     if (v) {
       const pos = indexToPos(grid, r, c);
@@ -48,91 +42,46 @@ const getEnergized = (q: QueueItem[], debug = false) => {
           // continue in same direction
           switch (dir) {
             case Dir.Right:
-              c += 1;
+              q.push({ c: c + 1, r, dir });
               break;
             case Dir.Left:
-              c -= 1;
+              q.push({ c: c - 1, r, dir });
               break;
             case Dir.Up:
-              r -= 1;
+              q.push({ c, r: r - 1, dir });
               break;
             case Dir.Down:
-              r += 1;
+              q.push({ c, r: r + 1, dir });
               break;
           }
-          q.push({
-            r,
-            c,
-            dir,
-          });
           break;
 
         case "|":
           switch (dir) {
+            // split into up and down
             case Dir.Right:
             case Dir.Left:
-              // split into up and down
-              q.push({
-                r: r - 1,
-                c,
-                dir: Dir.Up,
-              });
-              q.push({
-                r: r + 1,
-                c,
-                dir: Dir.Down,
-              });
-              break;
+              q.push({ c, r: r - 1, dir: Dir.Up });
+              q.push({ c, r: r + 1, dir: Dir.Down });
+              continue;
             case Dir.Up:
-              // continue up
-              q.push({
-                r: r - 1,
-                c,
-                dir: Dir.Up,
-              });
-              break;
             case Dir.Down:
-              // continue down
-              q.push({
-                r: r + 1,
-                c,
-                dir: Dir.Down,
-              });
+              q.push({ c, r: dir === Dir.Up ? r - 1 : r + 1, dir });
               break;
           }
           break;
 
         case "-":
-          // split into left and right
           switch (dir) {
+            // split into left and right
             case Dir.Up:
             case Dir.Down:
-              q.push({
-                r,
-                c: c - 1,
-                dir: Dir.Left,
-              });
-              q.push({
-                r,
-                c: c + 1,
-                dir: Dir.Right,
-              });
-              break;
+              q.push({ c: c - 1, r, dir: Dir.Left });
+              q.push({ c: c + 1, r, dir: Dir.Right });
+              continue;
             case Dir.Left:
-              // continue left
-              q.push({
-                r,
-                c: c - 1,
-                dir: Dir.Left,
-              });
-              break;
             case Dir.Right:
-              // continue right
-              q.push({
-                r,
-                c: c + 1,
-                dir: Dir.Right,
-              });
+              q.push({ c: dir === Dir.Left ? c - 1 : c + 1, r, dir });
               break;
           }
           break;
@@ -142,35 +91,19 @@ const getEnergized = (q: QueueItem[], debug = false) => {
           switch (dir) {
             case Dir.Up:
               // take a right
-              q.push({
-                r,
-                c: c + 1,
-                dir: Dir.Right,
-              });
+              q.push({ c: c + 1, r, dir: Dir.Right });
               break;
             case Dir.Down:
               // take a left
-              q.push({
-                r,
-                c: c - 1,
-                dir: Dir.Left,
-              });
+              q.push({ c: c - 1, r, dir: Dir.Left });
               break;
             case Dir.Left:
               // go down
-              q.push({
-                r: r + 1,
-                c,
-                dir: Dir.Down,
-              });
+              q.push({ c, r: r + 1, dir: Dir.Down });
               break;
             case Dir.Right:
               // go up
-              q.push({
-                r: r - 1,
-                c,
-                dir: Dir.Up,
-              });
+              q.push({ c, r: r - 1, dir: Dir.Up });
               break;
           }
           break;
@@ -180,67 +113,31 @@ const getEnergized = (q: QueueItem[], debug = false) => {
           switch (dir) {
             case Dir.Up:
               // take a left
-              q.push({
-                r,
-                c: c - 1,
-                dir: Dir.Left,
-              });
+              q.push({ c: c - 1, r, dir: Dir.Left });
               break;
             case Dir.Down:
               // take a right
-              q.push({
-                r,
-                c: c + 1,
-                dir: Dir.Right,
-              });
+              q.push({ c: c + 1, r, dir: Dir.Right });
               break;
             case Dir.Left:
               // go up
-              q.push({
-                r: r - 1,
-                c,
-                dir: Dir.Up,
-              });
+              q.push({ c, r: r - 1, dir: Dir.Up });
               break;
             case Dir.Right:
               // go down
-              q.push({
-                r: r + 1,
-                c,
-                dir: Dir.Down,
-              });
+              q.push({ c, r: r + 1, dir: Dir.Down });
               break;
           }
           break;
       }
     }
-
-    // if (debug) {
-    //   console.log(r, c, v, q);
-    // }
   }
-
-  // if (debug) {
-  //   const g2 = structuredClone(grid);
-  //   posToIndices(grid, energizedSet).forEach(([r, c]) => {
-  //     g2[r][c] = "#";
-  //   });
-  //   printGrid(g2);
-  // }
   return energizedSet.size;
 };
 
-console.log(
-  "Part 1: ",
-  getEnergized([
-    {
-      r: 0,
-      c: 0,
-      dir: Dir.Right,
-    },
-  ])
-);
+console.log("Part 1: ", getEnergized([{ r: 0, c: 0, dir: Dir.Right }]));
 
+// part 2
 const perimeterInds = [
   grid[0].map((_, i) => [0, i]), // top row
   grid[grid.length - 1].map((_, i) => [grid.length - 1, i]), // bottom row
@@ -251,111 +148,25 @@ const perimeterInds = [
 const p2 = perimeterInds.flat().map(([r, c]) => {
   const q: QueueItem[] = [];
 
-  // top left corner
-  if (r === 0 && c === 0) {
-    q.push(
-      ...[
-        {
-          r,
-          c,
-          dir: Dir.Right,
-        },
-        {
-          r,
-          c,
-          dir: Dir.Down,
-        },
-      ]
-    );
+  // top row & corners
+  if (r === 0) {
+    q.push({ r, c, dir: Dir.Down });
+    if (c === 0) q.push({ r, c, dir: Dir.Right });
+    else if (c === width - 1) q.push({ r, c, dir: Dir.Left });
 
-    // top right corner
-  } else if (r === 0 && c === width - 1) {
-    q.push(
-      ...[
-        {
-          r,
-          c,
-          dir: Dir.Left,
-        },
-        {
-          r,
-          c,
-          dir: Dir.Down,
-        },
-      ]
-    );
-
-    // bottom left corner
-  } else if (r === height - 1 && c === 0) {
-    q.push(
-      ...[
-        {
-          r,
-          c,
-          dir: Dir.Right,
-        },
-        {
-          r,
-          c,
-          dir: Dir.Up,
-        },
-      ]
-    );
-
-    // bottom right corner
-  } else if (r === height - 1 && c === width - 1) {
-    q.push(
-      ...[
-        {
-          r,
-          c,
-          dir: Dir.Left,
-        },
-        {
-          r,
-          c,
-          dir: Dir.Up,
-        },
-      ]
-    );
-
-    // top row
-  } else if (r === 0) {
-    q.push({
-      r,
-      c,
-      dir: Dir.Down,
-    });
-
-    // bottom row
+    // bottom row & corners
   } else if (r === height - 1) {
-    q.push({
-      r,
-      c,
-      dir: Dir.Up,
-    });
+    q.push({ r, c, dir: Dir.Up });
+    if (c === 0) q.push({ r, c, dir: Dir.Right });
+    else if (c === width - 1) q.push({ r, c, dir: Dir.Left });
 
     // left col
   } else if (c === 0) {
-    q.push({
-      r,
-      c,
-      dir: Dir.Right,
-    });
+    q.push({ r, c, dir: Dir.Right });
 
     // right col
-  } else if (c === width - 1) {
-    q.push({
-      r,
-      c,
-      dir: Dir.Left,
-    });
-  }
+  } else if (c === width - 1) q.push({ r, c, dir: Dir.Left });
 
-  const tmp = getEnergized(q, r === 0 && c === 3);
-  // if (r === 0 && c === 3) {
-  //   console.log(tmp);
-  // }
-  return tmp;
+  return getEnergized(q);
 });
 console.log("Part 2: ", Math.max(...p2));
