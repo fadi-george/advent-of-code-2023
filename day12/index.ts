@@ -17,7 +17,7 @@ lines.map((line, rI) => {
   ]);
 });
 
-// const matchPattern = (pattern: string) => {
+// const isPatternMatch = (pattern: string, option: string) => {
 //   for (let i = 0; i < pattern.length; i++) {
 //     if (pattern[i] === ".") {
 //       if (option[i] !== ".") return false;
@@ -25,53 +25,57 @@ lines.map((line, rI) => {
 //       if (option[i] !== "#") return false;
 //     }
 //   }
+//   return true;
 // };
 
+// let visited = new Set<string>();
+let cache: { [key: string]: number } = {};
 const getPermutations = (pattern: string, groups: number[]) => {
-  let match = 0;
-  let visited = new Set<string>();
+  if (pattern.length === 0) return groups.length === 0 ? 1 : 0;
+  // if (groups.length === 0) return pattern.includes("#") ? 0 : 1;
 
-  const q: { str: string; sI: number; gI: number }[] = [
-    { str: "", sI: 0, gI: 0 },
-  ];
-  console.log(pattern, groups, pattern.length);
+  const s = pattern[0];
+  const key = `${pattern}-${groups.toString()}`;
 
-  while (q.length > 0) {
-    const { str, sI, gI } = q.pop()!;
-    const s = pattern[sI];
+  // if (cache[key]) return cache[key];
 
-    const key = str + sI + gI;
+  let res = 0;
+  if (s === "." || s === "?") res += getPermutations(pattern.slice(1), groups);
+  if (s === "#" || s === "?") {
+    const g = groups[0];
+    // if (!g) return 0;
 
-    console.log(str, sI, gI, s);
-    if (s === undefined) {
-      if (str.length === pattern.length && gI === groups.length) {
-        const l = str[str.length - 1];
-        const p = pattern[pattern.length - 1];
-        if (p === "?" || l === p) {
-          match++;
-          console.log("match", str);
-        }
-      }
-      continue;
-    }
-    if (s === "." || s === "?") {
-      q.push({ str: str + ".", sI: sI + 1, gI });
-    }
-    if (s === "#" || s === "?") {
-      const g = groups[gI];
-      if (g) {
-        const spaceCh = gI === groups.length - 1 ? "" : ".";
-        q.push({
-          str: str + "#".repeat(g) + spaceCh,
-          sI: sI + g + spaceCh.length,
-          gI: gI + 1,
-        });
-      }
-    }
+    const spaceCh = groups.length === 1 ? "" : "."; // no space for last group
+    const str = "#".repeat(g) + spaceCh;
+    // console.log("1", { g, str, pl: pattern.length, pattern });
+    if (str.length > pattern.length) return 0; // too long to fit #s
+
+    const notValid = [...str].some(
+      (c, i) => pattern[i] !== "?" && c !== pattern[i]
+    );
+    // console.log("2", { notValid });
+    // if (notValid) return 0;
+    if (!notValid)
+      res += getPermutations(pattern.slice(str.length), groups.slice(1));
+    // console.log("3", { res });
   }
+  console.log("4", { res });
 
-  console.log(match);
-  return match;
+  return res;
 };
 
-getPermutations(p1Patterns[0][0], p1Patterns[0][1]);
+const countMatches = (patterns: Patterns) => {
+  // const matches = patterns
+  //   .slice(2, 3)
+  //   .map(([pattern, groups]) => getPermutations(pattern, groups));
+
+  const [pattern, groups] = patterns[2];
+  console.log("???", [getPermutations(pattern, groups)]);
+  // return matches.sum();
+};
+
+// part 1
+console.log("Part 1: ", countMatches(p1Patterns));
+
+// part 2
+// console.log("Part 2: ", countMatches(p2Patterns));

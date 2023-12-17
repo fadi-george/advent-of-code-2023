@@ -11,7 +11,7 @@ Array.prototype.product = function () {
 export const readInput = (dir: string, regex = "\n") => {
   return fs
     .readFileSync(
-      path.join(dir, `${import.meta.env.input || "sample5"}.txt`),
+      path.join(dir, `${import.meta.env.input || "sample"}.txt`),
       "utf8"
     )
     .split(regex);
