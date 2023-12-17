@@ -3,11 +3,15 @@ import path from "path";
 
 export { AStar, type Position } from "./aStar";
 
+/* Array prototype helpers */
 Array.prototype.sum = function () {
   return this.reduce((a, b) => a + b, 0);
 };
 Array.prototype.product = function () {
   return this.reduce((a, b) => a * b, 1);
+};
+Array.prototype.repeat = function (n: number) {
+  return new Array(n).fill(this).flat();
 };
 
 export const readInput = (dir: string, regex = "\n") => {
