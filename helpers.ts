@@ -159,3 +159,9 @@ export const addBorderToGrid = <T>(grid: T[][], borderValue: T): T[][] => {
 
   return borderedGrid;
 };
+
+export const createGrid = <T>(
+  w: number,
+  h: number,
+  fillCh: T | null = null
+): T[][] => Array.from({ length: h }, () => new Array(w).fill(fillCh));
