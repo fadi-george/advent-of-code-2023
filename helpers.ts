@@ -1,8 +1,6 @@
 import fs from "fs";
 import path from "path";
 
-export { AStar, type Position } from "./aStar";
-
 /* Array prototype helpers */
 Array.prototype.sum = function () {
   return this.reduce((a, b) => a + b, 0);
