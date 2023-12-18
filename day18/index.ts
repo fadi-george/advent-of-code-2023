@@ -1,5 +1,5 @@
 import { Point, readInput } from "../helpers";
-import { shoelaceFormula } from "../shoelace";
+import { shoelaceFormula as shoelace } from "../shoelace";
 
 const dir = import.meta.dir;
 const lines = readInput(dir, "\n");
@@ -25,33 +25,23 @@ lines.forEach((line) => {
 });
 
 const getArea = (ins: Instructions) => {
-  let perimeter = 0;
-
   // get polygon points
+  let perimeter = 0;
   let r = 0;
   let c = 0;
   let points: Point[] = [{ y: r, x: c }];
 
   for (let [d, n] of ins) {
-    switch (d) {
-      case "R":
-        c += n;
-        break;
-      case "L":
-        c -= n;
-        break;
-      case "D":
-        r += n;
-        break;
-      case "U":
-        r -= n;
-        break;
-    }
+    if (d === "R") c += n;
+    else if (d === "L") c -= n;
+    else if (d === "D") r += n;
+    else if (d === "U") r -= n;
     points.push({ y: r, x: c });
     perimeter += n;
   }
 
-  const area = shoelaceFormula(points) + perimeter / 2 + 1;
+  // shoelace adds half the boundary areas - 1, so we'll add the remaining perimeter plus 1
+  const area = shoelace(points) + perimeter / 2 + 1;
   console.log(area);
 };
 

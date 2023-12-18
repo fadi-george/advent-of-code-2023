@@ -21,7 +21,7 @@ Array.prototype.repeat = function (n: number) {
 export const readInput = (dir: string, regex = "\n") => {
   return fs
     .readFileSync(
-      path.join(dir, `${import.meta.env.input || "sample"}.txt`),
+      path.join(dir, `${import.meta.env.input || "input"}.txt`),
       "utf8"
     )
     .split(regex);
