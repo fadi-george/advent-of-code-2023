@@ -1,4 +1,11 @@
-import { createGrid, printGrid, readInput } from "../helpers";
+import {
+  addBorderToGrid,
+  createGrid,
+  floodFill,
+  floodFillStack,
+  printGrid,
+  readInput,
+} from "../helpers";
 
 const dir = import.meta.dir;
 const lines = readInput(dir, "\n");
@@ -11,74 +18,71 @@ lines.forEach((line, ii) => {
 });
 
 // determine grid size
-let w = 1;
-let h = 1;
-let cR = 1; // row offset from top left corner
-let cC = 1; // column offset from top left corner
+let cR = 0;
+let cC = 0;
 let minC = Infinity;
 let minR = Infinity;
+let maxC = -Infinity;
+let maxR = -Infinity;
 for (let [d, n] of ints) {
   switch (d) {
     case "R":
-      cR += n;
-      if (cR > w) w = cR;
+      cC += n;
       break;
     case "L":
-      cR -= n;
-      if (cR < 0) w += -cR;
+      cC -= n;
       break;
     case "D":
-      cC += n;
-      if (cC > h) h = cC;
+      cR += n;
       break;
     case "U":
-      cC -= n;
-      if (cC < 0) h += -cC;
+      cR -= n;
       break;
   }
+
   if (cR < minR) minR = cR;
   if (cC < minC) minC = cC;
+  if (cR > maxR) maxR = cR;
+  if (cC > maxC) maxC = cC;
 }
+let w = maxC - minC + 1;
+let h = maxR - minR + 1;
 
 type Value = "#" | ".";
 const grid = createGrid<Value>(w, h, ".");
 
 // determine gid map
-let r = 0 - minR + 1;
-let c = 0 - minC + 1;
-// for (let [d, n] of ints) {
-//   switch (d) {
-//     case "R":
-//       for (let i = 0; i < n; i++) grid[r][c++] = "#";
-//       break;
-//     case "L":
-//       for (let i = 0; i < n; i++) grid[r][c--] = "#";
-//       break;
-//     case "D":
-//       for (let i = 0; i < n; i++) grid[r++][c] = "#";
-//       break;
-//     case "U":
-//       for (let i = 0; i < n; i++) grid[r--][c] = "#";
-//       break;
-//   }
-// }
+let r = Math.abs(minR);
+let c = Math.abs(minC);
+for (let [d, n] of ints) {
+  switch (d) {
+    case "R":
+      for (let i = 0; i < n; i++) grid[r][++c] = "#";
+      break;
+    case "L":
+      for (let i = 0; i < n; i++) grid[r][--c] = "#";
+      break;
+    case "D":
+      for (let i = 0; i < n; i++) grid[++r][c] = "#";
+      break;
+    case "U":
+      for (let i = 0; i < n; i++) grid[--r][c] = "#";
+      break;
+  }
+}
 
-// // count area
-// // printGrid(grid);
+// count area
+const g2 = addBorderToGrid<Value | "/">(grid, ".");
+floodFillStack(g2, 0, 0, ["."], "/");
 
-// let area = 0;
-// let inside = false;
-// for (let r = 0; r < h; r++) {
-//   inside = false;
-//   for (let c = 0; c < w; c++) {
-//     if (grid[r][c] === "#") {
-//       if (c === 0 || grid[r][c - 1] !== "#") inside = !inside;
-//       area += 1;
-//     } else if (inside) {
-//       area += 1;
-//     }
-//   }
-// }
-
-// // 1578559 wrong
-// console.log(area);
+w += 2;
+h += 2;
+let area = 0;
+for (let r = 0; r < h; r++) {
+  for (let c = 0; c < w; c++) {
+    if (g2[r][c] !== "/") {
+      area++;
+    }
+  }
+}
+console.log("Part 1: ", area);

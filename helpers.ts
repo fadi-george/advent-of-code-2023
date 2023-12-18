@@ -90,6 +90,34 @@ export const floodFill = <T>(
   return matrix;
 };
 
+export const floodFillStack = <T>(
+  grid: Matrix<T>,
+  startR: number,
+  startC: number,
+  value: T[],
+  newValue: T
+) => {
+  const startValue = grid[startR][startC];
+  if (startValue === newValue) return;
+
+  const rows = grid.length;
+  const cols = grid[0].length;
+  const stack: [number, number][] = [[startR, startC]];
+
+  while (stack.length > 0) {
+    const [row, col] = stack.pop()!;
+
+    if (value.includes(grid[row][col])) {
+      grid[row][col] = newValue;
+
+      if (row > 0) stack.push([row - 1, col]); // Up
+      if (row < rows - 1) stack.push([row + 1, col]); // Down
+      if (col > 0) stack.push([row, col - 1]); // Left
+      if (col < cols - 1) stack.push([row, col + 1]); // Right
+    }
+  }
+};
+
 export const indexToPos = <T>(grid: Matrix<T>, r: number, c: number) =>
   r * grid[0].length + c;
 
