@@ -1,6 +1,12 @@
 import fs from "fs";
 import path from "path";
 
+// types
+export type Point = {
+  x: number;
+  y: number;
+};
+
 /* Array prototype helpers */
 Array.prototype.sum = function () {
   return this.reduce((a, b) => a + b, 0);
@@ -191,3 +197,36 @@ export const createGrid = <T>(
   h: number,
   fillCh: T | null = null
 ): T[][] => Array.from({ length: h }, () => new Array(w).fill(fillCh));
+
+type Interval = [number, number];
+
+export const mergeIntervals = (intervals: Interval[]): Interval[] => {
+  if (intervals.length <= 1) {
+    return intervals;
+  }
+
+  // Sort intervals based on the start value
+  intervals.sort((a, b) => a[0] - b[0]);
+
+  const merged: Interval[] = [];
+  let currentInterval = intervals[0];
+
+  for (let i = 1; i < intervals.length; i++) {
+    const [currentStart, currentEnd] = currentInterval;
+    const [nextStart, nextEnd] = intervals[i];
+
+    if (currentEnd >= nextStart) {
+      // Overlapping intervals, merge them
+      currentInterval = [currentStart, Math.max(currentEnd, nextEnd)];
+    } else {
+      // Non-overlapping interval, push the current interval and update it
+      merged.push(currentInterval);
+      currentInterval = intervals[i];
+    }
+  }
+
+  // Add the last interval
+  merged.push(currentInterval);
+
+  return merged;
+};

@@ -13,13 +13,3 @@ export function shoelaceFormula(polygon: Point[]): number {
   // The area is half of the absolute value of the sum.
   return Math.abs(area) / 2;
 }
-
-// Example usage
-const polygon: Point[] = [
-  { x: 0, y: 0 },
-  { x: 4, y: 0 },
-  { x: 4, y: 4 },
-  { x: 0, y: 4 },
-];
-
-console.log(shoelaceFormula(polygon)); // Outputs: 16, which is the area of the square
