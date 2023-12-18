@@ -23,12 +23,20 @@ type QueueItem = {
 const getPath = (minCount: number, maxCount: number) => {
   const q = new PriorityQueue<QueueItem>((p1, p2) => p1.hl - p2.hl);
   q.push({
-    r: 0,
+    r: 1,
     c: 0,
-    dr: 0,
+    dr: 1,
     dc: 0,
-    hl: 0,
-    dirCount: 0,
+    hl: heatGrid[1][0],
+    dirCount: 1,
+  });
+  q.push({
+    r: 0,
+    c: 1,
+    dr: 0,
+    dc: 1,
+    hl: heatGrid[0][1],
+    dirCount: 1,
   });
 
   const seen = new Set<string>();
@@ -43,18 +51,21 @@ const getPath = (minCount: number, maxCount: number) => {
     const { hl, r, c, dr, dc, dirCount } = q.pop();
 
     // stop at bottom right
-    if (r === goal.r && c === goal.c) return hl;
+    if (r === goal.r && c === goal.c && dirCount >= minCount) {
+      return hl;
+    }
 
-    if (seen.has(`${r}-${c}-${dr}-${dc}-${dirCount}`)) continue;
-    seen.add(`${r}-${c}-${dr}-${dc}-${dirCount}`);
+    const key = `${r}-${c}-${dr}-${dc}-${dirCount}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
 
     for (const [dr2, dc2] of dirs) {
       if (dr2 === -dr && dc2 == -dc) continue;
 
       let nr = r + dr2;
       let nc = c + dc2;
-      const newDirCount = dr === dr2 && dc === dc2 ? dirCount + 1 : 1;
       const v = heatGrid[nr]?.[nc];
+      const newDirCount = dr === dr2 && dc === dc2 ? dirCount + 1 : 1;
 
       if (v === undefined) continue;
 
