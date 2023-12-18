@@ -20,10 +20,11 @@ type PQ = {
   hl: number; // heat loss
   r: number; // row
   c: number; // col
-  lastDir: Dir; // last direction traveled
-  dir: Dir; // direction traveling
+  dr: number; // delta row
+  dc: number; // delta col
   dirCount: number; // number of times direction has been traveled
   value: number;
+  paths: [number, number][]; // debug
 };
 
 const end = { r: heatGrid.length - 1, c: heatGrid[0].length - 1 };
@@ -37,8 +38,8 @@ heap.add({
   hl: heatGrid[0][0],
   r: 0,
   c: 0,
-  lastDir: Dir.Down,
-  dir: Dir.Right,
+  dr: 0,
+  dc: 0,
   dirCount: 0,
   value: heatGrid[0][0],
   paths: [[0, 0]],
@@ -47,27 +48,19 @@ heap.add({
   hl: heatGrid[0][0],
   r: 0,
   c: 0,
-  lastDir: Dir.Down,
-  dir: Dir.Down,
+  dr: 0,
+  dc: 0,
   dirCount: 0,
   value: heatGrid[0][0],
   paths: [[0, 0]],
 });
 
 while (heap.length > 0) {
-  const { hl, r, c, lastDir, dir, dirCount, value, paths } = heap.remove()!;
-  // console.log({
-  //   hl,
-  //   r,
-  //   c,
-  //   lastDir,
-  //   dir,
-  //   dirCount,
-  //   value,
-  // });
+  const { hl, r, c, dr, dc, dirCount, value, paths } = heap.remove()!;
+  // console.log({ hl, r, c, dr, dc, dirCount, value, paths });
 
   if (r === end.r && c === end.c) {
-    console.log("Part 1: ", { hl, r, c, lastDir, dir, dirCount, value, paths });
+    console.log("Part 1: ", { hl, paths });
     console.log(
       "what",
       paths.reduce((acc, [r, c]) => acc + heatGrid[r][c], 0)
@@ -79,46 +72,55 @@ while (heap.length > 0) {
     break;
   }
 
-  const key = `${r}-${c}-${dir}-${dirCount}`;
+  const key = `${r}-${c}-${dr}-${dc}-${dirCount}`;
 
   if (seen.has(key)) continue;
   seen.add(key);
 
-  if (lastDir === dir && dirCount < 3) {
-    const nr = r + (dir === Dir.Up ? -1 : dir === Dir.Down ? 1 : 0);
-    const nc = c + (dir === Dir.Left ? -1 : dir === Dir.Right ? 1 : 0);
+  if (dirCount < 3 && !(dr === 0 && dc === 0)) {
+    const nr = r + dr;
+    const nc = c + dc;
     const v2 = heatGrid[nr]?.[nc];
-    if (v2 !== undefined)
+    if (v2 !== undefined) {
+      // console.log("1");
       heap.add({
         hl: hl + value,
         r: nr,
         c: nc,
-        lastDir: dir,
-        dir,
+        dr,
+        dc,
         dirCount: dirCount + 1,
+        paths: [...paths, [nr, nc]],
+        value: v2,
+      });
+    }
+  }
+
+  [
+    [-1, 0], // top
+    [1, 0], // bottom
+    [0, 1], // right
+    [0, -1], // left
+  ].forEach(([dr2, dc2]) => {
+    const nr = r + dr2;
+    const nc = c + dc2;
+
+    const v2 = heatGrid[nr]?.[nc];
+    if (
+      v2 !== undefined &&
+      !(dr === dr2 && dc === dc2) &&
+      !(dr === -dr2 && dc === -dc2)
+    ) {
+      heap.add({
+        hl: value + v2,
+        r: nr,
+        c: nc,
+        dr: dr2,
+        dc: dc2,
+        dirCount: 1,
         value: v2,
         paths: [...paths, [nr, nc]],
       });
-  } else {
-    [
-      [r - 1, c, Dir.Up],
-      [r + 1, c, Dir.Down],
-      [r, c - 1, Dir.Left],
-      [r, c + 1, Dir.Right],
-    ].forEach(([nr, nc, newDir]) => {
-      const v2 = heatGrid[nr]?.[c];
-      if (v2 !== undefined && lastDir !== newDir) {
-        heap.add({
-          hl: value + v2,
-          r: nr,
-          c: nc,
-          lastDir: dir,
-          dir: newDir,
-          dirCount: 1, // reset dir
-          value: v2,
-          paths: [...paths, [nr, nc]],
-        });
-      }
-    });
-  }
+    }
+  });
 }
