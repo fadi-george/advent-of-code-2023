@@ -1,4 +1,4 @@
-import { readInput } from "../helpers";
+import { printGrid, readInput } from "../helpers";
 
 const dir = import.meta.dir;
 const workflows: Record<string, Function[]> = {};
@@ -44,6 +44,11 @@ w.split("\n").forEach((line) => {
       ([, , , ret]) => ret !== "A"
     );
   }
+  if (lastC === "R") {
+    workflowRanges[name] = workflowRanges[name].filter(
+      ([, , , ret]) => ret !== "R"
+    );
+  }
 });
 
 const params: [number, number, number, number][] = [];
@@ -79,6 +84,7 @@ const p1 = params.filter(checkPart).reduce((a, p) => a + p.sum(), 0);
 console.log("Part 1: ", p1);
 
 let minRanges: number[][][] = [];
+let changeRanges: string[][] = [];
 let q = [
   {
     mins: [
@@ -98,56 +104,85 @@ const cMap = {
   s: 3,
 };
 
-console.log(workflowRanges);
 while (q.length) {
   const { wID, mins, chain } = q.shift()!;
 
   const workflow = workflowRanges[wID];
 
-  // const elseC = workflow[workflow.length - 1][0];
-  // let foundA = false;
   for (let i = 0; i < workflow.length; i++) {
-    const [cat, op, val, ret] = workflow[i];
+    let [cat, op, val, ret] = workflow[i];
+    let newMins: number[][] | undefined = undefined;
+    let hasQ;
+    let cI;
 
     // the else case rule
     if (cat === "A") {
-      console.log("hmm", mins, chain);
-      minRanges.push(mins);
+      newMins = mins;
+    } else if (cat === "R") {
       continue;
-    }
-    if (cat === "R") continue;
-    if (!op) {
-      q.push({ mins, wID: cat, chain: [...chain, cat] });
-      continue;
+    } else if (!op) {
+      newMins = mins;
+      ret = cat;
+      hasQ = true;
     }
 
     // regular rules
-    let cI = cMap[cat as keyof typeof cMap];
-    let [minV, maxV] = mins[cI];
-    if (op === ">") {
-      if (maxV > val) {
-        const newMins = mins.with(cI, [val + 1, maxV]);
-        if (ret === "A") {
-          console.log("hmm", newMins, chain);
-          minRanges.push(newMins);
-        } else if (ret !== "R") {
-          q.push({ mins: newMins, wID: ret, chain: [...chain, ret] });
+    if (op) {
+      const cI = cMap[cat as keyof typeof cMap];
+      const [minV, maxV] = mins[cI];
+
+      if (op === ">") {
+        if (maxV > val) {
+          if (ret === "A") {
+            newMins = mins.with(cI, [val + 1, maxV]);
+          } else if (ret !== "R") {
+            newMins = mins.with(cI, [val + 1, maxV]);
+            hasQ = true;
+          }
+        }
+      } else if (op === "<") {
+        if (minV < val) {
+          if (ret === "A") {
+            newMins = mins.with(cI, [minV, val - 1]);
+          } else if (ret !== "R") {
+            newMins = mins.with(cI, [minV, val - 1]);
+            hasQ = true;
+          }
         }
       }
-    } else if (op === "<") {
-      if (minV < val) {
-        const newMins = mins.with(cI, [minV, val - 1]);
-        if (ret === "A") {
-          console.log("hmm", newMins, chain);
-          minRanges.push(newMins);
-        } else if (ret !== "R") {
-          q.push({ mins: newMins, wID: ret, chain: [...chain, ret] });
+    }
+
+    if (newMins) {
+      // if current rule is accepted then we need to negate all previous rules
+      for (let j = i - 1; j >= 0; j--) {
+        const [cat, op, val, ret] = workflow[j];
+        cI = cMap[cat as keyof typeof cMap];
+        const [minV, maxV] = newMins[cI];
+
+        // becomes ≤
+        if (op === ">") {
+          newMins = newMins.with(cI, [minV, val]);
+          // becomes ≥
+        } else if (op === "<") {
+          newMins = newMins.with(cI, [val, maxV]);
         }
+      }
+
+      if (!hasQ) {
+        minRanges.push(newMins);
+        changeRanges.push(chain);
+      } else {
+        q.push({ mins: newMins, wID: ret, chain: [...chain, ret] });
       }
     }
   }
 }
+
+// too 148216942286101
 const p2 = minRanges.reduce((acc, ints) => {
   return acc + ints.reduce((a, [min, max]) => a * (max - min + 1), 1);
 }, 0);
-console.log(p2);
+console.log("Part 2: ", p2);
+console.log(workflowRanges);
+printGrid(minRanges, " , ");
+printGrid(changeRanges, " -> ");
