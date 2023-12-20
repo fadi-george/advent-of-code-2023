@@ -38,6 +38,12 @@ w.split("\n").forEach((line) => {
     if (lastC === "A") return "accept";
     return lastC;
   });
+
+  if (lastC === "A") {
+    workflowRanges[name] = workflowRanges[name].filter(
+      ([, , , ret]) => ret !== "A"
+    );
+  }
 });
 
 const params: [number, number, number, number][] = [];
@@ -72,121 +78,76 @@ const checkPart = (p: [number, number, number, number]) => {
 const p1 = params.filter(checkPart).reduce((a, p) => a + p.sum(), 0);
 console.log("Part 1: ", p1);
 
-// const cMap = {
-//   x: 0,
-//   m: 1,
-//   a: 2,
-//   s: 3,
-// };
+let minRanges: number[][][] = [];
+let q = [
+  {
+    mins: [
+      [1, 4000],
+      [1, 4000],
+      [1, 4000],
+      [1, 4000],
+    ],
+    wID: "in",
+    chain: ["in"], // debug
+  },
+];
+const cMap = {
+  x: 0,
+  m: 1,
+  a: 2,
+  s: 3,
+};
 
-// let minRanges = [4000, 4000, 4000, 4000];
-// // const workflow = workflowRanges["in"];
+console.log(workflowRanges);
+while (q.length) {
+  const { wID, mins, chain } = q.shift()!;
 
-// const getMinRange = (wID: string, ranges: number[]) => {
-//   const workflow = workflowRanges[wID];
-//   const elseC = workflow[workflow.length - 1][0];
-//   let hasACase = false;
+  const workflow = workflowRanges[wID];
 
-//   for (let i = 0; i < workflow.length - 1; i++) {
-//     const [cat, op, val, ret] = workflow[i];
-//     let ci = cMap[cat as keyof typeof cMap]; // get index of category
+  // const elseC = workflow[workflow.length - 1][0];
+  // let foundA = false;
+  for (let i = 0; i < workflow.length; i++) {
+    const [cat, op, val, ret] = workflow[i];
 
-//     // else case
-//     if (cat === "A") {
-//       // ???
-//       break;
-//     }
+    // the else case rule
+    if (cat === "A") {
+      console.log("hmm", mins, chain);
+      minRanges.push(mins);
+      continue;
+    }
+    if (cat === "R") continue;
+    if (!op) {
+      q.push({ mins, wID: cat, chain: [...chain, cat] });
+      continue;
+    }
 
-//     // min range doesn't change
-//     if (ret === "A" && elseC === "A") {
-//       continue;
-//     }
-
-//     if (ret === "A") {
-//       // min range changes
-//       if (op === ">") ranges[ci] = 4000 - val;
-//       else if (op === "<") ranges[ci] = val - 1;
-//       continue;
-//     }
-
-//     if (ret === "R") continue;
-
-//     getMinRange(ret, ranges);
-//   }
-
-//   // // check opposite conditions of preceding rules
-//   // if (elseC === "A" && !hasACase) {
-//   //   for (let i = 0; i < workflow.length - 1; i++) {
-//   //     const [cat, op, val] = workflow[i];
-//   //     let ci = cMap[cat as keyof typeof cMap]; // get index of category
-
-//   //     if (op === ">") ranges[ci] = val;
-//   //     else if (op === "<") ranges[ci] = 4000 - val + 1;
-//   //   }
-//   // }
-// };
-
-// getMinRange("in", [4000, 4000, 4000, 4000], ["x", "m", "a", "s"]);
-
-// const getMinRange = (wID: string, ranges: number[]) => {
-//   const workflow = workflowRanges[wID];
-//   const elseC = workflow[workflow.length - 1][0];
-//   let hasACase = false;
-
-//   for (let i = 0; i < workflow.length - 1; i++) {
-//     const [cat, op, val, ret] = workflow[i];
-//     let ci = cMap[cat as keyof typeof cMap]; // get index of category
-
-//     // min range doesn't change
-//     if (ret === "A" && elseC === "A") {
-//       hasACase = true;
-//       continue;
-//     }
-
-//     if (ret === "A") {
-//       // min range changes
-//       if (op === ">") ranges[ci] = 4000 - val;
-//       else if (op === "<") ranges[ci] = val - 1;
-//       continue;
-//     }
-
-//     if (ret === "R") continue;
-
-//     getMinRange(ret, ranges);
-//   }
-
-//   // check opposite conditions of preceding rules
-//   if (elseC === "A" && !hasACase) {
-//     for (let i = 0; i < workflow.length - 1; i++) {
-//       const [cat, op, val] = workflow[i];
-//       let ci = cMap[cat as keyof typeof cMap]; // get index of category
-
-//       if (op === ">") ranges[ci] = val;
-//       else if (op === "<") ranges[ci] = 4000 - val + 1;
-//     }
-//   }
-// };
-
-// const minRanges = Object.keys(workflowRanges).map((w) => {
-//   let cMins = [4000, 4000, 4000, 4000];
-
-//   getMinRange(w, cMins);
-
-//   return cMins;
-// });
-// console.log(minRanges);
-
-// for (let i = 0; i < workflow.length - 1; i++) {
-//   const [cat, op, val, ret] = workflow[i];
-//   let ci = cMap[cat as keyof typeof cMap]; // get index of category
-
-//   // min range doesn't change
-//   if (ret === "A") continue;
-
-//   if (ret === "R") {
-//     // min range changes
-//     if (op === ">") miNRanges[ci] = 4000 - val;
-//     else if (op === "<") miNRanges[ci] = val - 1;
-//     continue;
-//   }
-// }
+    // regular rules
+    let cI = cMap[cat as keyof typeof cMap];
+    let [minV, maxV] = mins[cI];
+    if (op === ">") {
+      if (maxV > val) {
+        const newMins = mins.with(cI, [val + 1, maxV]);
+        if (ret === "A") {
+          console.log("hmm", newMins, chain);
+          minRanges.push(newMins);
+        } else if (ret !== "R") {
+          q.push({ mins: newMins, wID: ret, chain: [...chain, ret] });
+        }
+      }
+    } else if (op === "<") {
+      if (minV < val) {
+        const newMins = mins.with(cI, [minV, val - 1]);
+        if (ret === "A") {
+          console.log("hmm", newMins, chain);
+          minRanges.push(newMins);
+        } else if (ret !== "R") {
+          q.push({ mins: newMins, wID: ret, chain: [...chain, ret] });
+        }
+      }
+    }
+  }
+}
+const p2 = minRanges.reduce((acc, ints) => {
+  return acc + ints.reduce((a, [min, max]) => a * (max - min + 1), 1);
+}, 0);
+console.log(p2);
