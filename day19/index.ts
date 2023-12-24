@@ -1,7 +1,12 @@
-import { printGrid, readInput } from "../helpers";
+import { readInput } from "../helpers";
 
 const dir = import.meta.dir;
-const workflows: Record<string, [string, string, number, string][]> = {};
+
+type Category = "x" | "m" | "a" | "s";
+
+type Rule = [string, string, number, string];
+
+const workflows: Record<string, Rule[]> = {};
 
 const [w, ratings] = readInput(dir, "\n\n");
 
@@ -11,12 +16,11 @@ w.split("\n").forEach((line) => {
 
   const rules = r.split(",");
   rules.slice(0, rules.length - 1).forEach((c) => {
+    // store rules as [category, operator, value, 'R' | 'A' or next workflow name]
     const [_, cat, op, val, ret] = c.match(/([xmas])(\>|\<)(\d+)\:(.*)/)!;
-    workflows[name].push([cat, op, +val, ret]);
+    workflows[name].push([cat as Category, op, +val, ret]);
   });
-
-  // @ts-expect-error - this is fine
-  workflows[name].push([rules[rules.length - 1]]);
+  workflows[name].push([rules[rules.length - 1], "", 0, ""]);
 });
 
 const params: [number, number, number, number][] = [];
@@ -62,98 +66,68 @@ const p1 = params
   .reduce((a, p) => a + p.sum(), 0);
 console.log("Part 1: ", p1);
 
+// calculates combinations of ranges, if min > max it'll just return 0
 const getMinTotals = (m: number[][]) =>
   m.reduce((a, [min, max]) => a * (max - min + 1), 1);
 
-let countPossible = (r: string, m: number[][], c: string[]): number => {
-  if (r === "A") return getMinTotals(m);
-  if (r === "R") return 0;
+type Ranges = Record<"x" | "m" | "a" | "s", [number, number]>;
+let countPossible = (wID: string, ranges: Ranges, c: string[]): number => {
+  if (wID === "A") return getMinTotals(Object.values(ranges));
+  if (wID === "R") return 0;
 
-  const workflow = workflows[r];
+  const workflow = workflows[wID];
   let res = 0;
 
-  const rules = workflow.slice(0, workflow.length - 1);
-  const fallback = workflow[workflow.length - 1];
-  let invalid = false;
+  const r = { ...ranges };
 
-  for (let i = 0; i < rules.length; i++) {
-    const [cat, op, val, ret] = rules[i];
-    const cI = cMap[cat as keyof typeof cMap];
-    const [minV, maxV] = m[cI];
-    const newMins = m.slice();
+  for (let i = 0; i < workflow.length; i++) {
+    const [cat, op, val, ret] = workflow[i];
 
-    let next: string | undefined = undefined;
-    if (op === ">") {
-      if (maxV > val) {
-        if (ret === "R") continue;
-        newMins[cI] = [val + 1, maxV];
-        next = ret;
-      }
-    } else if (op === "<") {
-      if (minV < val) {
-        if (ret === "R") continue;
-        newMins[cI] = [minV, val - 1];
-        next = ret;
-      }
-    }
+    if (op) {
+      const c = cat as Category;
+      const [minV, maxV] = r[c];
 
-    if (next) {
-      for (let j = i - 1; j >= 0; j--) {
-        const [cat, op, val] = rules[j];
-        const cI = cMap[cat as keyof typeof cMap];
-        const [minV, maxV] = newMins[cI];
-
-        // becomes ≤
-        if (op === ">") {
-          newMins[cI] = [minV, val];
-          // becomes ≥
-        } else if (op === "<") {
-          newMins[cI] = [val, maxV];
-        }
-      }
-
-      // if (newMins.some(([a, b]) => a > b)) {
-      //   invalid = true;
-      //   continue;
-      // }
-      res += countPossible(next, newMins, [...c, ret]);
-    }
-  }
-
-  // if (invalid) {
-  const [ret, i] = [fallback[0], rules.length];
-  if (ret !== "R") {
-    const newMins = m.slice();
-    for (let j = i - 1; j >= 0; j--) {
-      const [cat, op, val] = rules[j];
-      const cI = cMap[cat as keyof typeof cMap];
-      const [minV, maxV] = newMins[cI];
-
-      // becomes ≤
       if (op === ">") {
-        newMins[cI] = [minV, val];
-        // becomes ≥
+        if (maxV > val) {
+          r[c] = [val + 1, maxV];
+
+          // condition needs to be true so should update conditions
+          res += countPossible(ret, { ...r, [c]: [val + 1, maxV] }, [
+            ...c,
+            ret,
+          ]);
+        }
+        // otherwise, condition needs to be false
+        r[c] = [minV, val];
       } else if (op === "<") {
-        newMins[cI] = [val, maxV];
+        if (minV < val) {
+          res += countPossible(
+            ret,
+            {
+              ...r,
+              [c]: [minV, val - 1],
+            },
+            [...c, ret]
+          );
+        }
+        r[c] = [val, maxV];
       }
+    } else {
+      res += countPossible(cat, r, [...c, cat]);
     }
-    res += countPossible(ret, newMins, [...c, ret]);
   }
-  // }
 
   return res;
 };
 
 const p2 = countPossible(
   "in",
-  [
-    [1, 4000],
-    [1, 4000],
-    [1, 4000],
-    [1, 4000],
-  ],
+  {
+    x: [1, 4000],
+    m: [1, 4000],
+    a: [1, 4000],
+    s: [1, 4000],
+  },
   ["in"]
 );
-
-// 164721176613604 high
 console.log("Part 2: ", p2);
