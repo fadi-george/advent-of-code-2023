@@ -1,4 +1,4 @@
-import { printGrid, readInput } from "../helpers";
+import { lcm, readInput } from "../helpers";
 
 const dir = import.meta.dir;
 
@@ -11,15 +11,18 @@ type FlipFlop = {
   dest: string[];
   state: State;
 };
+
 type Conjunction = {
   type: "&";
   name: string;
   dest: string[];
   pulses: Record<string, Pulse>;
 };
-type Module = FlipFlop | Conjunction;
 
-const configs: Record<string, Module> = {};
+type Module = FlipFlop | Conjunction;
+type Configs = Record<string, Module>;
+
+const configs: Configs = {};
 let broadcaster: string[] = [];
 
 const lines = readInput(dir);
@@ -50,7 +53,11 @@ Object.values(configs).forEach((m) => {
 
 const counts = { low: 0, high: 0 };
 let cycle = 0;
+const rxParent = Object.values(configs).find((m) =>
+  m.dest.includes("rx")
+)?.name;
 
+let pulseCycles: Record<string, number> = {};
 const pushButton = () => {
   counts.low++;
   const q: { name: string; pulse: Pulse; src: string }[] = [];
@@ -66,6 +73,14 @@ const pushButton = () => {
 
   while (q.length) {
     const { name, pulse, src } = q.shift()!;
+
+    if (name === "rx" && rxParent) {
+      const pulses = (configs[rxParent] as Conjunction).pulses;
+      Object.keys(pulses).forEach((p) => {
+        if (pulses[p] === "high") if (!pulseCycles[p]) pulseCycles[p] = cycle;
+      });
+    }
+
     const module = configs[name];
 
     // e.g. a module like 'output' that only is a destination
@@ -103,6 +118,7 @@ const pushButton = () => {
   }
 };
 
+// determine low & high pulse counts after pressing button x times
 const areFlipFlopsOff = () =>
   Object.values(configs)
     .filter(isFlipFlop)
@@ -129,3 +145,28 @@ while (i < 1000) {
 
 const p1 = counts.high * counts.low;
 console.log("Part 1: ", p1);
+
+// part 2
+// reset config
+Object.values(configs).forEach((m) => {
+  if (isFlipFlop(m)) m.state = "off";
+  else Object.keys(m.pulses).forEach((p) => (m.pulses[p] = "low"));
+});
+
+const hasPulseCycles = () => Object.values(pulseCycles).every((c) => c > 0);
+
+if (rxParent) {
+  pulseCycles = {};
+  Object.keys((configs[rxParent] as Conjunction).pulses).forEach((p) => {
+    pulseCycles[p] = 0;
+  });
+
+  cycle = 1;
+  while (!hasPulseCycles()) {
+    pushButton();
+    cycle++;
+  }
+}
+
+const p2 = Object.values(pulseCycles).reduce(lcm, 1);
+console.log("Part 2: ", p2);
