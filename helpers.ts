@@ -173,7 +173,7 @@ export const getSurrounding = <T>(r: number, c: number) => [
   [r + 1, c + 1], // bottom right
 ];
 
-export const addBorderToGrid = <T>(grid: T[][], borderValue: T): T[][] => {
+export const padGrid = <T>(grid: T[][], borderValue: T): T[][] => {
   const rows = grid.length;
   const columns = grid[0].length;
 

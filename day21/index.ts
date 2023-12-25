@@ -1,14 +1,14 @@
-import { indexToPos, readInput } from "../helpers";
+import { indexToPos, padGrid, printGrid, readInput } from "../helpers";
 
-const grid: string[][] = [];
-const start = [-1, -1];
+const grid1: string[][] = [];
+const sPos = [-1, -1];
 
 const lines = readInput(import.meta.dir);
 lines.forEach((line, rI) => {
-  grid.push(line.split(""));
+  grid1.push(line.split(""));
   if (line.includes("S")) {
-    start[0] = rI;
-    start[1] = line.indexOf("S");
+    sPos[0] = rI;
+    sPos[1] = line.indexOf("S");
   }
 });
 
@@ -18,10 +18,20 @@ const dirs = [
   [1, 0], // down
   [0, -1], // left
 ];
+let dirCounts = [0, 0, 0, 0]; // [up, right, down, left]
 
-const countPlots = (maxSteps: number) => {
+const grid2 = structuredClone(grid1);
+grid2[sPos[0]][sPos[1]] = ".";
+
+const countPlots = (
+  grid: string[][],
+  maxSteps: number,
+  start: number[],
+  isInf: boolean = false
+) => {
   const visited = new Set<number>();
   const plots = new Set<number>();
+  let acc = 0;
 
   // let count = 0;
   const queue = [
@@ -43,9 +53,22 @@ const countPlots = (maxSteps: number) => {
 
     const key = indexToPos(grid, r, c);
 
+    if (r === 0) {
+      // up
+      dirCounts[0] = count;
+    } else if (r === grid.length - 1) {
+      // down
+      dirCounts[2] = count;
+    } else if (c === 0) {
+      // left
+      dirCounts[3] = count;
+    } else if (c === grid[0].length - 1) {
+      // right
+      dirCounts[1] = count;
+    }
+
     if ((count & 1) === 0) {
       if (!plots.has(key)) {
-        grid[r][c] = "0";
         plots.add(key);
       }
     }
@@ -57,11 +80,20 @@ const countPlots = (maxSteps: number) => {
       const v = grid[nr]?.[nc];
       if (v === ".") {
         queue.push({ pos: [nr, nc], count: count + 1 });
+      } else if (isInf && !v) {
+        console.log("inf", nr, nc);
+        // acc += countPlots(grid2, count, isFinite);
       }
     });
   }
-  return plots.size;
+  return acc + plots.size;
 };
 
-const p1 = countPlots(64);
+const p1 = countPlots(grid1, 64, sPos);
 console.log("Part 1: ", p1);
+
+// part 2
+
+// const len = grid2.length;
+// dirCounts = [0, 0, 0, 0];
+countPlots(grid2, 6, sPos);
