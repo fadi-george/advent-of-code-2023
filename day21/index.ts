@@ -27,6 +27,7 @@ const countPlots = (
   grid: string[][],
   maxSteps: number,
   start: number[],
+  startCount: number,
   isInf: boolean = false
 ) => {
   const visited = new Set<number>();
@@ -37,7 +38,7 @@ const countPlots = (
   const queue = [
     {
       pos: start,
-      count: 0,
+      count: startCount,
     },
   ];
 
@@ -53,20 +54,6 @@ const countPlots = (
 
     const key = indexToPos(grid, r, c);
 
-    if (r === 0) {
-      // up
-      dirCounts[0] = count;
-    } else if (r === grid.length - 1) {
-      // down
-      dirCounts[2] = count;
-    } else if (c === 0) {
-      // left
-      dirCounts[3] = count;
-    } else if (c === grid[0].length - 1) {
-      // right
-      dirCounts[1] = count;
-    }
-
     if ((count & 1) === 0) {
       if (!plots.has(key)) {
         plots.add(key);
@@ -81,19 +68,33 @@ const countPlots = (
       if (v === ".") {
         queue.push({ pos: [nr, nc], count: count + 1 });
       } else if (isInf && !v) {
-        console.log("inf", nr, nc);
-        // acc += countPlots(grid2, count, isFinite);
+        // const newCount = maxSteps - count;
+
+        const newPos = [nr, nc];
+        if (nr === -1) {
+          newPos[0] = grid.length - 1;
+        } else if (nr === grid.length) {
+          newPos[0] = 0;
+        } else if (nc === -1) {
+          newPos[1] = grid[0].length - 1;
+        } else if (nc === grid[0].length) {
+          newPos[1] = 0;
+        }
+        // console.log("inf", { count, newCount, nr, nc });
+        acc += countPlots(grid2, maxSteps, newPos, count, isInf);
       }
     });
   }
   return acc + plots.size;
 };
 
-const p1 = countPlots(grid1, 64, sPos);
+const steps = 10;
+const p1 = countPlots(grid1, steps, sPos, 0);
 console.log("Part 1: ", p1);
 
 // part 2
 
 // const len = grid2.length;
 // dirCounts = [0, 0, 0, 0];
-countPlots(grid2, 6, sPos);
+const p2 = countPlots(grid2, steps, sPos, 0, true);
+console.log("Part 2: ", p2);
